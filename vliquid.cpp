@@ -51,7 +51,7 @@ void callExamPublicFunction(const char* nodeIp, const int nodePort, uint64_t inp
             if (recvByte - ptr - sizeof(RequestResponseHeader) >= sizeof(ExamPublic_output)) {
                 auto response = (ExamPublic_output*)(data + ptr + sizeof(RequestResponseHeader));
                 outputValue = response->outputValue;
-                LOG("asdfasdf%d\n", outputValue);
+                LOG("Result: %d\n", outputValue);
                 success = true;
                 break;
             }
@@ -59,7 +59,6 @@ void callExamPublicFunction(const char* nodeIp, const int nodePort, uint64_t inp
         ptr += header->size();
     }
     const char* boolStr = success ? "true" : "false";
-    LOG(boolStr);
     if (!success) {
         LOG("Failed");
     }
@@ -72,5 +71,4 @@ void qxExamPublic(const char* nodeIp, int nodePort,
     uint64_t outputValue;
     uint64_t value = std::stoull(inputValue);
     callExamPublicFunction(nodeIp, nodePort, value, outputValue);
-    LOG("ExamPublic function called %d %d \n", nodePort);
 }
