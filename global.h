@@ -69,6 +69,9 @@ uint64_t g_quottery_number_bet_slot;
 uint64_t g_quottery_amount_per_bet_slot;
 uint32_t g_quottery_picked_option;
 
+// vliquid
+char* g_vliquid_exam_input_1 = nullptr;
+
 char* g_qutil_sendtomanyv1_payout_list_file = nullptr;
 
 uint64_t g_get_log_passcode[4] = {0};

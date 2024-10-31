@@ -11,6 +11,7 @@ SET(FILES ${CMAKE_SOURCE_DIR}/connection.cpp
 		  ${CMAKE_SOURCE_DIR}/quottery.cpp
 		  ${CMAKE_SOURCE_DIR}/qutil.cpp
 		  ${CMAKE_SOURCE_DIR}/qx.cpp
+		  ${CMAKE_SOURCE_DIR}/vliquid.cpp
 		  ${CMAKE_SOURCE_DIR}/proposal.cpp
 )
 SET(HEADER_FILES

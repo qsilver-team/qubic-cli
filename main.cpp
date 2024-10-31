@@ -12,6 +12,7 @@
 #include "qutil.h"
 #include "qx.h"
 #include "proposal.h"
+#include "vliquid.h"
 
 int run(int argc, char* argv[])
 {
@@ -169,6 +170,10 @@ int run(int argc, char* argv[])
                     qxGetAssetAskOrder(g_nodeIp, g_nodePort, g_qx_asset_name, g_qx_issuer, g_qx_offset);
                 }
             }
+            break;
+        case VLIQUID_EXAM_PUBLIC:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qxExamPublic(g_nodeIp, g_nodePort, g_vliquid_exam_input_1);
             break;
         case GET_COMP_LIST:
             sanityCheckNode(g_nodeIp, g_nodePort);

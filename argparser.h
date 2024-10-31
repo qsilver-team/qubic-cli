@@ -658,6 +658,19 @@ void parseArgument(int argc, char** argv){
         }
 
         /**********************
+         ******VLIQUID COMMAND****
+         **********************/
+
+        if(strcmp(argv[i], "-vliquidexampublic") == 0)
+        {
+            g_cmd = VLIQUID_EXAM_PUBLIC;
+            g_vliquid_exam_input_1 = argv[i+1];
+            i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        /**********************
          ******QTRY COMMAND****
          **********************/
 
