@@ -216,6 +216,8 @@ void print_help(){
     printf("\t\tRemove liquidity from a specific pool.\n");
     printf("\t-vliquidswaptoqu <LIQUID_ID> <INPUT_TOKEN_INFO> <INPUT_AMOUNT>\n");
     printf("\t\tSwap token to QU in a specific pool. INPUT_TOKEN_INFO format: 'assetName,issuer'\n");
+    printf("\t-vliquidswapfromqu <LIQUID_ID> <OUTPUT_TOKEN_INFO> <QU_AMOUNT>\n");
+    printf("\t\tSwap QU to a specify token in a specific pool. OUTPUT_TOKEN_INFO format: 'assetName,issuer'\n");
 }
 
 static long long charToNumber(char* a)
@@ -1190,6 +1192,17 @@ void parseArgument(int argc, char** argv){
             g_vliquid_liquid_id = charToNumber(argv[i+1]);
             g_vliquid_input_token_info = argv[i+2];
             g_vliquid_input_amount = charToNumber(argv[i+3]);
+            i+=4;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidswapfromqu") == 0)
+        {
+            g_cmd = VLIQUID_SWAP_FROM_QU;
+            g_vliquid_liquid_id = charToNumber(argv[i + 1]);
+            g_vliquid_output_token_info = argv[i + 2];
+            g_vliquid_qu_amount = charToNumber(argv[i + 3]);
             i+=4;
             CHECK_OVER_PARAMETERS
             break;
