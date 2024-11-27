@@ -192,6 +192,10 @@ void print_help(){
     printf("\t\tGet the status(binary number) that the user locked for 52 weeks.\n");
     printf("\t-qearngetunlockingstatus <IDENTITY>\n");
     printf("\t\tGet the unlocking history of the user.\n");
+
+    printf("\n[VLIQUID COMMANDS]\n");
+    printf("\t-vliquidbalanceofmicrotoken <ASSET_NAME> <ISSUER> <OWNER>\n");
+    printf("\t\tGet the balance of micro tokens for a specific owner.\n");
 }
 
 static long long charToNumber(char* a)
@@ -1041,6 +1045,16 @@ void parseArgument(int argc, char** argv){
             g_cmd = QEARN_GET_UNLOCKING_STATUS;
             g_requestedIdentity = argv[i+1];
             i+=2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidbalanceofmicrotoken") == 0) {
+            g_cmd = VLIQUID_BALANCE_OF_MICRO_TOKEN;
+            g_vliquid_micro_token_asset_name = argv[i+1];
+            g_vliquid_micro_token_issuer = argv[i+2];
+            g_vliquid_micro_token_owner = argv[i+3];
+            i += 4;
             CHECK_OVER_PARAMETERS
             break;
         }
