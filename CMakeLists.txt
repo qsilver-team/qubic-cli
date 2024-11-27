@@ -4,6 +4,7 @@ set (CMAKE_CXX_STANDARD 11)
 SET(FILES ${CMAKE_SOURCE_DIR}/connection.cpp
 		  ${CMAKE_SOURCE_DIR}/keyUtils.cpp
 		  ${CMAKE_SOURCE_DIR}/nodeUtils.cpp
+		  ${CMAKE_SOURCE_DIR}/fileUpload.cpp
 		  ${CMAKE_SOURCE_DIR}/walletUtils.cpp
 		  ${CMAKE_SOURCE_DIR}/assetUtils.cpp
 		  ${CMAKE_SOURCE_DIR}/qubicLogParser.cpp
@@ -11,6 +12,9 @@ SET(FILES ${CMAKE_SOURCE_DIR}/connection.cpp
 		  ${CMAKE_SOURCE_DIR}/quottery.cpp
 		  ${CMAKE_SOURCE_DIR}/qutil.cpp
 		  ${CMAKE_SOURCE_DIR}/qx.cpp
+		  ${CMAKE_SOURCE_DIR}/proposal.cpp
+		  ${CMAKE_SOURCE_DIR}/qearn.cpp
+		  ${CMAKE_SOURCE_DIR}/vliquid.cpp
 )
 SET(HEADER_FILES
 	K12AndKeyUtil.h
@@ -32,8 +36,13 @@ SET(HEADER_FILES
 	structs.h
 	utils.h
 	walletUtils.h
+	proposal.h
+	qearn.h
+	vliquid.h
 )
 ADD_EXECUTABLE(qubic-cli main.cpp ${FILES} ${HEADER_FILES})
 ADD_LIBRARY(fourq-qubic SHARED fourq-qubic.cpp)
+set_property(TARGET fourq-qubic PROPERTY SOVERSION 1)
 target_compile_options(fourq-qubic PRIVATE -DBUILD_4Q_LIB)
+install(TARGETS fourq-qubic LIBRARY)
 

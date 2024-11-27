@@ -11,6 +11,9 @@ char* g_requestedIdentity  = nullptr;
 char* g_qx_share_transfer_possessed_identity = nullptr;
 char* g_qx_share_transfer_new_owner_identity = nullptr;
 int64_t g_qx_share_transfer_amount = 0;
+const char* g_proposalString = "";
+const char* g_voteValueString = "";
+bool g_force = false;
 
 int64_t g_TxAmount = 0;
 uint16_t g_TxType = 0;
@@ -23,7 +26,7 @@ char* g_toogle_main_aux_0 = nullptr;
 char* g_toogle_main_aux_1 = nullptr;
 int g_set_solution_threshold_epoch = -1;
 int g_set_solution_threshold_value = -1;
-
+char* g_file_path = nullptr;
 
 uint32_t g_requestedTickNumber = 0;
 uint32_t g_offsetScheduledTick = DEFAULT_SCHEDULED_TICK_OFFSET;
@@ -52,6 +55,7 @@ char* g_qx_asset_transfer_issuer_in_hex;
 
 char* g_dump_binary_file_input;
 char* g_dump_binary_file_output;
+uint32_t g_dump_binary_contract_id = 0;
 
 //IPO bid
 uint32_t g_ipo_contract_index = 0;
@@ -68,3 +72,26 @@ uint32_t g_quottery_picked_option;
 char* g_qutil_sendtomanyv1_payout_list_file = nullptr;
 
 uint64_t g_get_log_passcode[4] = {0};
+
+//qearn
+uint64_t g_qearn_lock_amount;
+uint64_t g_qearn_unlock_amount;
+uint32_t g_qearn_locked_epoch;
+uint32_t g_qearn_getinfo_epoch;
+
+// vliquid
+char* g_vliquid_micro_token_asset_name = nullptr;
+char* g_vliquid_micro_token_issuer = nullptr;
+char* g_vliquid_micro_token_owner = nullptr;
+char* g_vliquid_micro_token_recipient = nullptr;
+char* g_vliquid_micro_token_spender = nullptr;
+int64_t g_vliquid_expensive_token_amount = 0;
+int64_t g_vliquid_micro_token_amount = 0;
+char* g_vliquid_create_liquid_file_path = nullptr;
+uint64_t g_vliquid_token_contribution = 0;
+uint64_t g_vliquid_liquid_id = 0;
+uint64_t g_vliquid_input_amount = 0;
+uint64_t g_vliquid_qu_amount = 0;
+uint64_t g_vliquid_qwallet_amount = 0;
+uint64_t g_vliquid_input_amount_a = 0;
+uint64_t g_vliquid_lp_amount = 0;

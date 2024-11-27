@@ -1,6 +1,5 @@
 #include <cstdint>
 #include <vector>
-#include "keyUtils.h"
 #include "K12AndKeyUtil.h"
 #include "logger.h"
 
@@ -80,7 +79,7 @@ void getPublicKeyFromIdentity(const char* identity, uint8_t* publicKey)
     memcpy(publicKey, publicKeyBuffer, 32);
 }
 
-bool checkSumIdentity(char* identity)
+bool checkSumIdentity(const char* identity)
 {
     unsigned char publicKeyBuffer[32];
     for (int i = 0; i < 4; i++)

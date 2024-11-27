@@ -11,6 +11,9 @@
 #include "quottery.h"
 #include "qutil.h"
 #include "qx.h"
+#include "proposal.h"
+#include "qearn.h"
+#include "vliquid.h"
 
 int run(int argc, char* argv[])
 {
@@ -64,6 +67,11 @@ int run(int argc, char* argv[])
                                   g_TxType, g_TxAmount, g_txExtraDataSize,
                                   g_txExtraData, g_offsetScheduledTick);
 
+            break;
+        case GET_TX_INFO:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckTxHash(g_requestedTxId);
+            getTxInfo(g_nodeIp, g_nodePort, g_requestedTxId);
             break;
         case CHECK_TX_ON_TICK:
             sanityCheckNode(g_nodeIp, g_nodePort);
@@ -176,6 +184,16 @@ int run(int argc, char* argv[])
             sanityCheckNode(g_nodeIp, g_nodePort);
             getLogFromNode(g_nodeIp, g_nodePort, g_get_log_passcode);
             break;
+        case UPLOAD_FILE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            uploadFile(g_nodeIp, g_nodePort, g_file_path, g_seed, g_offsetScheduledTick);
+            break;
+        case DOWNLOAD_FILE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            downloadFile(g_nodeIp, g_nodePort, g_requestedTxId, g_file_path);
+            break;
         case DUMP_SPECTRUM_FILE:
             sanityFileExist(g_dump_binary_file_input);
             sanityCheckValidString(g_dump_binary_file_output);
@@ -185,6 +203,11 @@ int run(int argc, char* argv[])
             sanityFileExist(g_dump_binary_file_input);
             sanityCheckValidString(g_dump_binary_file_output);
             dumpUniverseToCSV(g_dump_binary_file_input, g_dump_binary_file_output);
+            break;
+        case DUMP_CONTRACT_FILE:
+            sanityFileExist(g_dump_binary_file_input);
+            sanityCheckValidString(g_dump_binary_file_output);
+            dumpContractToCSV(g_dump_binary_file_input, g_dump_binary_contract_id, g_dump_binary_file_output);
             break;
         case PRINT_QX_FEE:
             sanityCheckNode(g_nodeIp, g_nodePort);
@@ -269,6 +292,10 @@ int run(int argc, char* argv[])
             sanityCheckSpecialCommand(g_requestedSpecialCommand);
             sendSpecialCommandGetMiningScoreRanking(g_nodeIp, g_nodePort, g_seed, g_requestedSpecialCommand);
             break;
+        case GET_VOTE_COUNTER_TX:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            getVoteCounterTransaction(g_nodeIp, g_nodePort, g_requestedTickNumber, g_requestedFileName);
+            break;
         case SYNC_TIME:
             sanityCheckNode(g_nodeIp, g_nodePort);
             sanityCheckSeed(g_seed);
@@ -285,7 +312,112 @@ int run(int argc, char* argv[])
             sanityCheckSeed(g_seed);
             qutilBurnQubic(g_nodeIp, g_nodePort, g_seed, g_TxAmount, g_offsetScheduledTick);
             break;
-
+        case GQMPROP_SET_PROPOSAL:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            gqmpropSetProposal(g_nodeIp, g_nodePort, g_seed, g_proposalString, g_offsetScheduledTick, g_force);
+            break;
+        case GQMPROP_CLEAR_PROPOSAL:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            gqmpropClearProposal(g_nodeIp, g_nodePort, g_seed, g_offsetScheduledTick);
+            break;
+        case GQMPROP_GET_PROPOSALS:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            gqmpropGetProposals(g_nodeIp, g_nodePort, g_proposalString);
+            break;
+        case GQMPROP_VOTE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            gqmpropVote(g_nodeIp, g_nodePort, g_seed, g_proposalString, g_voteValueString, g_offsetScheduledTick, g_force);
+            break;
+        case GQMPROP_GET_VOTE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            if (g_requestedIdentity)
+                sanityCheckIdentity(g_requestedIdentity);
+            else
+                sanityCheckSeed(g_seed);
+            gqmpropGetVote(g_nodeIp, g_nodePort, g_proposalString, g_requestedIdentity, g_seed);
+            break;
+        case GQMPROP_GET_VOTING_RESULTS:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            gqmpropGetVotingResults(g_nodeIp, g_nodePort, g_proposalString);
+            break;
+        case GQMPROP_GET_REV_DONATION:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            gqmpropGetRevenueDonationTable(g_nodeIp, g_nodePort);
+            break;
+        case CCF_SET_PROPOSAL:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            ccfSetProposal(g_nodeIp, g_nodePort, g_seed, g_proposalString, g_offsetScheduledTick, g_force);
+            break;
+        case CCF_CLEAR_PROPOSAL:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            ccfClearProposal(g_nodeIp, g_nodePort, g_seed, g_offsetScheduledTick);
+            break;
+        case CCF_GET_PROPOSALS:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            ccfGetProposals(g_nodeIp, g_nodePort, g_proposalString);
+            break;
+        case CCF_VOTE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            ccfVote(g_nodeIp, g_nodePort, g_seed, g_proposalString, g_voteValueString, g_offsetScheduledTick, g_force);
+            break;
+        case CCF_GET_VOTE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            if (g_requestedIdentity)
+                sanityCheckIdentity(g_requestedIdentity);
+            else
+                sanityCheckSeed(g_seed);
+            ccfGetVote(g_nodeIp, g_nodePort, g_proposalString, g_requestedIdentity, g_seed);
+            break;
+        case CCF_GET_VOTING_RESULTS:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            ccfGetVotingResults(g_nodeIp, g_nodePort, g_proposalString);
+            break;
+        case CCF_GET_LATEST_TRANSFERS:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            ccfGetLatestTransfers(g_nodeIp, g_nodePort);
+        case QEARN_LOCK:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qearnLock(g_nodeIp, g_nodePort, g_seed, g_qearn_lock_amount, g_offsetScheduledTick);
+            break;
+        case QEARN_UNLOCK:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            qearnUnlock(g_nodeIp, g_nodePort, g_seed, g_qearn_unlock_amount, g_qearn_locked_epoch, g_offsetScheduledTick);
+            break;
+        case QEARN_GET_INFO_PER_EPOCH:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qearnGetInfoPerEpoch(g_nodeIp, g_nodePort, g_qearn_getinfo_epoch);
+            break;
+        case QEARN_GET_USER_LOCKED_INFO:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qearnGetUserLockedInfo(g_nodeIp, g_nodePort, g_requestedIdentity, g_qearn_getinfo_epoch);
+            break;
+        case QEARN_GET_STATE_OF_ROUND:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qearnGetStateOfRound(g_nodeIp, g_nodePort, g_qearn_getinfo_epoch);
+            break;
+        case QEARN_GET_USER_LOCK_STATUS:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qearnGetUserLockedStatus(g_nodeIp, g_nodePort, g_requestedIdentity);
+            break;
+        case QEARN_GET_UNLOCKING_STATUS:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            qearnGetEndedStatus(g_nodeIp, g_nodePort, g_requestedIdentity);
+            break;
+        case VLIQUID_BALANCE_OF_MICRO_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            sanityCheckValidString(g_vliquid_micro_token_owner);
+            vliquidBalanceOfMicroToken(g_nodeIp, g_nodePort, g_vliquid_micro_token_asset_name, g_vliquid_micro_token_issuer, g_vliquid_micro_token_owner);
+            break;
         default:
             printf("Unexpected command!\n");
             break;

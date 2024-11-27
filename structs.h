@@ -52,7 +52,55 @@ enum COMMAND
     GET_MINING_SCORE_RANKING=44,
     SEND_COIN_IN_TICK = 45,
     QUTIL_BURN_QUBIC=46,
-    TOTAL_COMMAND = 47, // DO NOT CHANGE THIS
+    GET_VOTE_COUNTER_TX=47,
+    GQMPROP_SET_PROPOSAL = 48,
+    GQMPROP_CLEAR_PROPOSAL = 49,
+    GQMPROP_GET_PROPOSALS = 50,
+    GQMPROP_VOTE = 51,
+    GQMPROP_GET_VOTE = 52,
+    GQMPROP_GET_VOTING_RESULTS = 53,
+    GQMPROP_GET_REV_DONATION = 54,
+    CCF_SET_PROPOSAL = 55,
+    CCF_CLEAR_PROPOSAL = 56,
+    CCF_GET_PROPOSALS = 57,
+    CCF_VOTE = 58,
+    CCF_GET_VOTE = 59,
+    CCF_GET_VOTING_RESULTS = 60,
+    CCF_GET_LATEST_TRANSFERS = 61,
+    DUMP_CONTRACT_FILE = 62,
+    GET_TX_INFO = 63,
+    UPLOAD_FILE = 64,
+    DOWNLOAD_FILE = 65,
+    QEARN_LOCK = 66,
+    QEARN_UNLOCK = 67,
+    QEARN_GET_INFO_PER_EPOCH = 68,
+    QEARN_GET_USER_LOCKED_INFO = 69,
+    QEARN_GET_STATE_OF_ROUND = 70,
+    QEARN_GET_USER_LOCK_STATUS = 71,
+    QEARN_GET_UNLOCKING_STATUS = 72,
+    VLIQUID_BALANCE_OF_MICRO_TOKEN = 73,
+    VLIQUID_MICRO_TOKEN_ALLOWANCE = 74,
+    VLIQUID_CONVERT_TO_MICRO_TOKEN = 75,
+    VLIQUID_CONVERT_TO_EXPENSIVE_TOKEN = 76,
+    VLIQUID_TRANSFER_MICRO_TOKEN = 77,
+    VLIQUID_APPROVE_MICRO_TOKEN = 78,
+    VLIQUID_TRANSFER_FROM_MICRO_TOKEN = 79,
+    VLIQUID_CREATE_LIQUID = 80,
+    VLIQUID_ADD_LIQUID = 81,
+    VLIQUID_REMOVE_LIQUID = 82,
+    VLIQUID_SWAP_TO_QU = 83,
+    VLIQUID_SWAP_FROM_QU = 84,
+    VLIQUID_SWAP_TO_QWALLET = 85,
+    VLIQUID_SWAP_FROM_QWALLET = 86,
+    VLIQUID_SWAP_QU_TO_QWALLET = 87,
+    VLIQUID_SWAP_QWALLET_TO_QU = 88,
+    VLIQUID_SINGLE_SWAP = 89,
+    VLIQUID_CROSS_SWAP = 90,
+    VLIQUID_INITIALIZE_STAKING_POOL = 91,
+    VLIQUID_DEPOSITE_BONUS_TOKEN = 92,
+    VLIQUID_STAKE = 93,
+    VLIQUID_UNSTAKE = 94,
+    TOTAL_COMMAND, // DO NOT CHANGE THIS
 };
 
 struct RequestResponseHeader {
@@ -176,6 +224,7 @@ typedef struct
     unsigned int initialTick;
 } CurrentTickInfo;
 
+#pragma pack(push, 1)
 typedef struct
 {
     short version;
@@ -197,7 +246,14 @@ typedef struct
 
     uint8_t randomMiningSeed[32];
     int solutionThreshold;
+
+    unsigned long long totalSpectrumAmount;
+
+    // Entity balances less or euqal this value will be burned if number of entites rises to 75% of spectrum capacity.
+    // Starts to be meaningful if >50% of spectrum is filled but may still change after that.
+    unsigned long long currentEntityBalanceDustThreshold;
 } CurrentSystemInfo;
+#pragma pack(pop)
 
 typedef struct
 {
@@ -212,21 +268,6 @@ typedef struct
     unsigned char day;
     unsigned char month;
     unsigned char year;
-
-    union
-    {
-        struct
-        {
-            unsigned char uriSize;
-            unsigned char uri[255];
-        } proposal;
-        struct
-        {
-            unsigned char zero;
-            unsigned char votes[(676 * 3 + 7) / 8];
-            unsigned char quasiRandomNumber;
-        } ballot;
-    } varStruct;
 
     unsigned char timelock[32];
     unsigned char transactionDigests[NUMBER_OF_TRANSACTIONS_PER_TICK][32];
@@ -264,12 +305,21 @@ typedef struct
 
 typedef struct
 {
+    unsigned char transactionDigest[32];
+} RequestedTransactionInfo;
+
+typedef struct
+{
     uint8_t sig[SIGNATURE_SIZE];
 } SignatureStruct;
 typedef struct
 {
     char hash[60];
 } TxhashStruct;
+typedef struct
+{
+    uint8_t ptr[32];
+} TxHash32Struct;
 typedef struct
 {
     std::vector<uint8_t> vecU8;
@@ -553,3 +603,155 @@ struct RespondTxStatus
     }
 };
 #pragma pack(pop)
+
+
+enum SCType
+{
+    SC_TYPE_Contract0State = 0,
+    SC_TYPE_QX = 1,
+    SC_TYPE_QTRY = 2,
+    SC_TYPE_RANDOM = 3,
+    SC_TYPE_QUTIL = 4,
+    SC_TYPE_MLM = 5,
+    SC_TYPE_GQMPROP = 6,
+    SC_TYPE_SWATCH = 7,
+    SC_TYPE_CCF = 8,
+    SC_TYPE_MAX
+};
+
+// Generate contract related structs
+constexpr uint64_t X_MULTIPLIER = 1ULL;
+struct ContractDescription
+{
+    char assetName[8];
+    // constructionEpoch needs to be set to after IPO (IPO is before construction)
+    uint16_t constructionEpoch, destructionEpoch;
+    uint64_t stateSize;
+};
+
+struct ContractBase
+{
+};
+
+template <typename T, uint64_t L>
+struct array
+{
+    static_assert(L && !(L & (L - 1)),
+        "The capacity of the array must be 2^N."
+        );
+    T _values[L];
+};
+
+static const int64_t COLLECTION_NULL_INDEX = -1LL;
+
+// Simplified collection from core
+template <typename T, uint64_t L>
+struct collection
+{
+public:
+
+    // Return maximum number of elements that may be stored.
+    static constexpr uint64_t capacity() { return L; }
+
+    // Return total populations.
+    uint64_t population() { return _population; }
+
+    // Return element value at elementIndex.
+    inline T element(int64_t elementIndex) const { return _elements[elementIndex & (L - 1)].value; }
+
+    // Return overall number of elements.
+    inline uint64_t population() const { return _population; }
+
+    // Return point of view elementIndex belongs to (or 0 id if unused).
+    void pov(int64_t elementIndex, uint8_t* povID) const
+    {
+        memcpy(povID, _povs[_elements[elementIndex & (L - 1)].povIndex].value, 32);
+    }
+
+    // Return priority of elementIndex (or 0 id if unused).
+    int64_t priority(int64_t elementIndex) const
+    {
+        return _elements[elementIndex & (L - 1)].priority;
+    }
+
+private:
+    static_assert(L && !(L & (L - 1)), "The capacity of the collection must be 2^N.");
+    static constexpr int64_t _nEncodedFlags = L > 32 ? 32 : L;
+
+    // Hash map of point of views = element filters, each with one priority queue (or empty)
+    struct PoV
+    {
+        uint8_t value[32];
+        uint64_t population;
+        int64_t headIndex, tailIndex;
+        int64_t bstRootIndex;
+    } _povs[L];
+
+    // 2 bits per element of _povs: 0b00 = not occupied; 0b01 = occupied; 0b10 = occupied but marked
+    // for removal; 0b11 is unused The state "occupied but marked for removal" is needed for finding
+    // the index of a pov in the hash map. Setting an entry to "not occupied" in remove() would
+    // potentially undo a collision, create a gap, and mess up the entry search.
+    uint64_t _povOccupationFlags[(L * 2 + 63) / 64];
+
+    // Array of elements (filled sequentially), each belongs to one PoV / priority queue (or is
+    // empty) Elements of a POV entry will be stored as a binary search tree (BST); so this
+    // structure has some properties related to BST (bstParentIndex, bstLeftIndex, bstRightIndex).
+    struct Element
+    {
+        T value;
+        int64_t priority;
+        int64_t povIndex;
+        int64_t bstParentIndex;
+        int64_t bstLeftIndex;
+        int64_t bstRightIndex;
+    } _elements[L];
+    uint64_t _population;
+    uint64_t _markRemovalCounter;
+};
+
+struct FileHeaderTransaction : public Transaction
+{
+    static constexpr unsigned char transactionType()
+    {
+        return 3; // TODO: Set actual value
+    }
+
+    static constexpr long long minAmount()
+    {
+        return 0;
+    }
+
+    static constexpr unsigned short minInputSize()
+    {
+        return sizeof(fileSize)
+               + sizeof(numberOfFragments)
+               + sizeof(fileFormat);
+    }
+
+    unsigned long long fileSize;
+    unsigned long long numberOfFragments;
+    unsigned char fileFormat[8];
+    unsigned char signature[SIGNATURE_SIZE];
+};
+
+struct FileFragmentTransactionPrefix : public Transaction
+{
+    static constexpr unsigned char transactionType()
+    {
+        return 4; // TODO: Set actual value
+    }
+
+    static constexpr long long minAmount()
+    {
+        return 0;
+    }
+
+    static constexpr unsigned short minInputSize()
+    {
+        return sizeof(fragmentIndex)
+               + sizeof(prevFileFragmentTransactionDigest);
+    }
+
+    unsigned long long fragmentIndex;
+    uint8_t prevFileFragmentTransactionDigest[32];
+};

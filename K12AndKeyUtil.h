@@ -1,8 +1,10 @@
+#pragma once
+
 #include <cstring>
 #include <immintrin.h>
 #include <cstdint>
 #include <string>
-
+#include "keyUtils.h"
 #define ROL64(a, offset) ((((unsigned long long)a) << offset) ^ (((unsigned long long)a) >> (64 - offset)))
 
 #define KeccakF1600RoundConstant0 0x000000008000808bULL
@@ -2111,8 +2113,7 @@ static bool decode(const uint8_t* Pencoded, point_t P)
     f2elm_t u, v;
     point_extproj_t R;
     unsigned int i;
-
-    *((__m256i*)P->y) = *((__m256i*)Pencoded);      // Decoding y-coordinate and sign
+    memcpy(P->y, Pencoded, 32);
     P->y[1][1] &= 0x7FFFFFFFFFFFFFFF;
 
     fp2sqr1271(P->y, u);
@@ -2193,16 +2194,14 @@ static bool decode(const uint8_t* Pencoded, point_t P)
     return true;
 }
 
-VOID_FUNC_DECL sign(const unsigned char* subseed, const unsigned char* publicKey, const unsigned char* messageDigest, unsigned char* signature)
-{ // SchnorrQ signature generation
-    // It produces the signature signature of a message messageDigest of size 32 in bytes
-    // Inputs: 32-byte subseed, 32-byte publicKey, and messageDigest of size 32 in bytes
+VOID_FUNC_DECL signWithNonceK(const unsigned char* k, const unsigned char* publicKey, const unsigned char* messageDigest, unsigned char* signature)
+{
+    // Requires correctly precalculated k as input!
+    // Inputs: 64-byte input (k precomputed), 32-byte publicKey, and messageDigest of size 32 in bytes
     // Output: 64-byte signature
     point_t R;
-    unsigned char k[64] , h[64]  , temp[32 + 64] ;
-    unsigned long long r[8] ;
-
-    KangarooTwelve((unsigned char*)subseed, 32, k, 64);
+    unsigned char h[64] , temp[32 + 64];
+    unsigned long long r[8];
 
     *((__m256i*)(temp + 32)) = *((__m256i*)(k + 32));
     *((__m256i*)(temp + 64)) = *((__m256i*)messageDigest);
@@ -2227,6 +2226,17 @@ VOID_FUNC_DECL sign(const unsigned char* subseed, const unsigned char* publicKey
     {
         _addcarry_u64(_addcarry_u64(_addcarry_u64(_addcarry_u64(0, ((unsigned long long*)signature)[4], CURVE_ORDER_0, &((unsigned long long*)signature)[4]), ((unsigned long long*)signature)[5], CURVE_ORDER_1, &((unsigned long long*)signature)[5]), ((unsigned long long*)signature)[6], CURVE_ORDER_2, &((unsigned long long*)signature)[6]), ((unsigned long long*)signature)[7], CURVE_ORDER_3, &((unsigned long long*)signature)[7]);
     }
+}
+
+VOID_FUNC_DECL sign(const unsigned char* subseed, const unsigned char* publicKey, const unsigned char* messageDigest, unsigned char* signature) 
+{
+    // SchnorrQ signature generation
+    // It produces the signature signature of a message messageDigest of size 32 in bytes
+    // Inputs: 32-byte subseed, 32-byte publicKey, and messageDigest of size 32 in bytes
+    // Output: 64-byte signature
+    unsigned char k[64];
+    KangarooTwelve((unsigned char*)subseed, 32, k, 64);
+    signWithNonceK(k, publicKey, messageDigest, signature);
 }
 
 BOOL_FUNC_DECL verify(const unsigned char* publicKey, const unsigned char* messageDigest, const unsigned char* signature)
@@ -2258,4 +2268,30 @@ BOOL_FUNC_DECL verify(const unsigned char* publicKey, const unsigned char* messa
     encode(A, (unsigned char*)A);
 
     return (memcmp(A, signature, 32) == 0);
+}
+
+/* Get 32 bytes of public key from 55-char seed
+ * */
+static void getPublicKeyFromSeed(const char* seed, uint8_t* publicKey)
+{
+    uint8_t privateKey[32] = {0};
+    uint8_t subseed[32] = {0};
+    getSubseedFromSeed((uint8_t*)seed, subseed);
+    getPrivateKeyFromSubSeed(subseed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, publicKey);
+}
+
+/* Sign an array of bytes
+ * */
+static void signData(const char* seed, const uint8_t* data, const size_t dataLength, uint8_t* signature)
+{
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t subseed[32] = {0};
+    getSubseedFromSeed((uint8_t*)seed, subseed);
+    getPrivateKeyFromSubSeed(subseed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+    uint8_t digest[32];
+    KangarooTwelve(data, dataLength, digest, 32);
+    sign(subseed, sourcePublicKey, digest, signature);
 }

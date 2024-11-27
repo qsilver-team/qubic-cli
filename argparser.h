@@ -25,6 +25,9 @@ void print_help(){
     printf("\t\tPort of the target node for querying blockchain information (default: 21841)\n");
     printf("\t-scheduletick <TICK_OFFSET>\n");
     printf("\t\tOffset number of scheduled tick that will perform a transaction (default: 20)\n");
+    printf("\t-force\n");
+    printf("\t\tDo action although an error has been detected. Currently only implemented for proposals.\n");
+
     printf("Command:\n");
     printf("[WALLET COMMAND]\n");
     printf("\t-showkeys\n");
@@ -50,6 +53,12 @@ void print_help(){
     printf("\t\tGet of the current epoch. Feed this data to -readtickdata to verify tick data. valid node ip/port are required.\n");
     printf("\t-getnodeiplist\n");
     printf("\t\tPrint a list of node ip from a seed node ip. Valid node ip/port are required.\n");
+    printf("\t-gettxinfo <TX_ID>\n");
+    printf("\t\tGet tx infomation, will print empty if there is no tx or invalid tx. valid node ip/port are required.\n");
+    printf("\t-uploadfile <FILE_PATH>\n");
+    printf("\t\tUpload a file to qubic network. valid node ip/port and seed are required.\n");
+    printf("\t-downloadfile <TX_ID> <FILE_PATH>\n");
+    printf("\t\tDownload a file to qubic network. valid node ip/port are required.\n");
     printf("\t-checktxontick <TICK_NUMBER> <TX_ID>\n");
     printf("\t\tCheck if a transaction is included in a tick. valid node ip/port are required.\n");
     printf("\t-checktxonfile <TX_ID> <TICK_DATA_FILE>\n");
@@ -61,15 +70,15 @@ void print_help(){
     printf("\t-dumpspectrumfile <SPECTRUM_BINARY_FILE> <OUTPUT_CSV_FILE>\n");
     printf("\t\tDump spectrum file into csv.\n");
     printf("\t-dumpuniversefile <UNIVERSE_BINARY_FILE> <OUTPUT_CSV_FILE>\n");
-    printf("\t\tDump spectrum file into csv.\n");
+    printf("\t\tDump universe file into csv.\n");
+    printf("\t-dumpcontractfile <CONTRACT_BINARY_FILE> <CONTRACT_ID> <OUTPUT_CSV_FILE>\n");
+    printf("\t\tDump contract file into csv. Current supported CONTRACT_IDs: 1-QX \n");
     printf("\t-makeipobid <CONTRACT_INDEX> <NUMBER_OF_SHARE> <PRICE_PER_SHARE>\n");
     printf("\t\tParticipating IPO (dutch auction). valid private key and node ip/port, CONTRACT_INDEX are required.\n");
     printf("\t-getipostatus <CONTRACT_INDEX>\n");
     printf("\t\tView IPO status. valid node ip/port, CONTRACT_INDEX are required.\n");
     printf("\t-getsysteminfo\n");
     printf("\t\tView Current System Status. Includes initial tick, random mining seed, epoch info.\n");
-    printf("\t-publishproposal \n");
-    printf("\t\t(on development)\n");
 
     printf("\n[NODE COMMAND]\n");
     printf("\t-getcurrenttick\n");
@@ -93,6 +102,10 @@ void print_help(){
     printf("\t\tFetch a single log line from the node. Valid node ip/port, passcodes are required.\n");
     printf("\t-synctime\n");
     printf("\t\tSync node time with local time, valid private key and node ip/port are required. Make sure that your local time is synced (with NTP)!\t\n");
+    printf("\t-getminingscoreranking\n");
+    printf("\t\tGet current mining score ranking. Valid private key and node ip/port are required.\t\n");
+    printf("\t-getvotecountertx <COMPUTOR_LIST_FILE> <TICK>\n");
+    printf("\t\tGet vote counter transaction of a tick: showing how many votes per ID that this tick leader saw from (<TICK>-675-3) to (<TICK>-3) \t\n");
 
     printf("\n[QX COMMAND]\n");
     printf("\t-qxgetfee\n");
@@ -125,6 +138,64 @@ void print_help(){
     printf("\t\t(Oracle providers only) publish a result for a bet\n");
     printf("\t-qtrycancelbet <BET_ID>\n");
     printf("\t\t(Game operator only) cancel a bet\n");
+
+    printf("\n[GENERAL QUORUM PROPOSAL COMMANDS]\n");
+    printf("\t-gqmpropsetproposal <PROPOSAL_STRING>\n");
+    printf("\t\tSet proposal in general quorum proposals contract. May overwrite existing proposal, because each computor can have only one proposal at a time. For success, computor status is needed.\n");
+    printf("\t\t<PROPOSAL_STRING> is explained if there is a parsing error.\n");
+    printf("\t-gqmpropclearproposal\n");
+    printf("\t\tClear own proposal in general quorum proposals contract. For success, computor status is needed.\n");
+    printf("\t-gqmpropgetproposals <PROPOSAL_INDEX_OR_GROUP>\n");
+    printf("\t\tGet proposal info from general quorum proposals contract.\n");
+    printf("\t\tEither pass \"active\" to get proposals that are open for voting in the current epoch, or \"finished\" to get proposals of previous epochs not overwritten or cleared yet, or a proposal index.\n");
+    printf("\t-gqmpropvote <PROPOSAL_INDEX> <VOTE_VALUE>\n");
+    printf("\t\tVote for proposal in general quorum proposals contract.\n");
+    printf("\t\t<VOTE_VALUE> is the option in range 0 ... N-1 or \"none\".\n");
+    printf("\t-gqmpropgetvote <PROPOSAL_INDEX> [VOTER_IDENTITY]\n");
+    printf("\t\tGet vote from general quorum proposals contract. If VOTER_IDENTITY is skipped, identity of seed is used.\n");
+    printf("\t-gqmpropgetresults <PROPOSAL_INDEX>\n");
+    printf("\t\tGet the current result of a proposal (general quorum proposals contract).\n");
+    printf("\t-gqmpropgetrevdonation\n");
+    printf("\t\tGet and print table of revenue donations applied after each epoch.\n");
+
+    printf("\n[CCF COMMANDS]\n");
+    printf("\t-ccfsetproposal <PROPOSAL_STRING>\n");
+    printf("\t\tSet proposal in computor controlled fund (CCF) contract. May overwrite existing proposal, because each seed can have only one proposal at a time. Costs a fee.\n");
+    printf("\t\t<PROPOSAL_STRING> is explained if there is a parsing error. Only \"Transfer|2\" (yes/no transfer proposals) are allowed in CCF.\n");
+    printf("\t-ccfclearproposal\n");
+    printf("\t\tClear own proposal in CCF contract. Costs a fee.\n");
+    printf("\t-ccfgetproposals <PROPOSAL_INDEX_OR_GROUP>\n");
+    printf("\t\tGet proposal info from CCF contract.\n");
+    printf("\t\tEither pass \"active\" to get proposals that are open for voting in the current epoch, or \"finished\" to get proposals of previous epochs not overwritten or cleared yet, or a proposal index.\n");
+    printf("\t-ccfvote <PROPOSAL_INDEX> <VOTE_VALUE>\n");
+    printf("\t\tCast vote for a proposal in the CCF contract.\n");
+    printf("\t\t<VOTE_VALUE> is the option in range 0 ... N-1 or \"none\".\n");
+    printf("\t-ccfgetvote <PROPOSAL_INDEX> [VOTER_IDENTITY]\n");
+    printf("\t\tGet vote from CCF contract. If VOTER_IDENTITY is skipped, identity of seed is used.\n");
+    printf("\t-ccfgetresults <PROPOSAL_INDEX>\n");
+    printf("\t\tGet the current result of a CCF proposal.\n");
+    printf("\t-ccflatesttransfers\n");
+    printf("\t\tGet and print latest transfers of CCF granted by quorum.\n");
+
+    printf("\n[QEARN COMMANDS]\n");
+    printf("\t-qearnlock <LOCK_AMOUNT>\n");
+    printf("\t\tlock the qu to Qearn SC.\n");
+    printf("\t-qearnunlock <UNLOCKING_AMOUNT> <LOCKED_EPOCH>\n");
+    printf("\t\tunlock the qu from Qearn SC, unlock the amount of <UNLOCKING_AMOUNT> that locked in the epoch <LOCKED_EPOCH>.\n");
+    printf("\t-qearngetlockinfoperepoch <EPOCH>\n");
+    printf("\t\tGet the info(Total locked amount, Total bonus amount) locked in <EPOCH>.\n");
+    printf("\t-qearngetuserlockedinfo <IDENTITY> <EPOCH>\n");
+    printf("\t\tGet the locked amount that the user <IDENTITY> locked in the epoch <EPOCH>.\n");
+    printf("\t-qearngetstateofround <EPOCH>\n");
+    printf("\t\tGet the status(not started, running, ended) of the epoch <EPOCH>.\n");
+    printf("\t-qearngetuserlockstatus <IDENTITY>\n");
+    printf("\t\tGet the status(binary number) that the user locked for 52 weeks.\n");
+    printf("\t-qearngetunlockingstatus <IDENTITY>\n");
+    printf("\t\tGet the unlocking history of the user.\n");
+
+    printf("\n[VLIQUID COMMANDS]\n");
+    printf("\t-vliquidbalanceofmicrotoken <ASSET_NAME> <ISSUER> <OWNER>\n");
+    printf("\t\tGet the balance of micro tokens for a specific owner.\n");
 }
 
 static long long charToNumber(char* a)
@@ -329,6 +400,31 @@ void parseArgument(int argc, char** argv){
             CHECK_OVER_PARAMETERS
             break;
         }
+        if(strcmp(argv[i], "-gettxinfo") == 0)
+        {
+            g_cmd = GET_TX_INFO;
+            g_requestedTxId = argv[i+1];
+            i+=2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if(strcmp(argv[i], "-uploadfile") == 0)
+        {
+            g_cmd = UPLOAD_FILE;
+            g_file_path = argv[i+1];
+            i+=2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if(strcmp(argv[i], "-downloadfile") == 0)
+        {
+            g_cmd = DOWNLOAD_FILE;
+            g_requestedTxId = argv[i+1];
+            g_file_path = argv[i+2];
+            i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
         if(strcmp(argv[i], "-checktxontick") == 0)
         {
             g_cmd = CHECK_TX_ON_TICK;
@@ -356,6 +452,17 @@ void parseArgument(int argc, char** argv){
             CHECK_OVER_PARAMETERS
             break;
         }
+
+        if(strcmp(argv[i], "-getvotecountertx") == 0)
+        {
+            g_cmd = GET_VOTE_COUNTER_TX;
+            g_requestedFileName = argv[i+1];
+            g_requestedTickNumber = charToNumber(argv[i+2]);
+            i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
 
         if(strcmp(argv[i], "-sendcustomtransaction") == 0)
         {
@@ -390,6 +497,17 @@ void parseArgument(int argc, char** argv){
             break;
         }
 
+        if(strcmp(argv[i], "-dumpcontractfile") == 0)
+        {
+            g_cmd = DUMP_CONTRACT_FILE;
+            g_dump_binary_file_input = argv[i+1];
+            g_dump_binary_contract_id = charToNumber(argv[i+2]);
+            g_dump_binary_file_output = argv[i+3];
+            i+=4;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
         if(strcmp(argv[i], "-makeipobid") == 0)
         {
             g_cmd = MAKE_IPO_BID;
@@ -409,11 +527,6 @@ void parseArgument(int argc, char** argv){
             break;
         }
 
-        if(strcmp(argv[i], "-publishproposal") == 0)
-        {
-            LOG("On development\n");
-            exit(0);
-        }
 
         /**********************
          *****NODE COMMAND*****
@@ -676,6 +789,272 @@ void parseArgument(int argc, char** argv){
             g_cmd = QUTIL_BURN_QUBIC;
             g_TxAmount = charToNumber(argv[i + 1]);
             i+=2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        /**********************
+         ****GQMPROP COMMAND***
+         **********************/
+
+        if (strcmp(argv[i], "-gqmpropsetproposal") == 0)
+        {
+            g_cmd = GQMPROP_SET_PROPOSAL;
+            g_proposalString = argv[i + 1];
+            i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if (strcmp(argv[i], "-gqmpropclearproposal") == 0)
+        {
+            g_cmd = GQMPROP_CLEAR_PROPOSAL;
+            i += 1;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if (strcmp(argv[i], "-gqmpropgetproposals") == 0)
+        {
+            g_cmd = GQMPROP_GET_PROPOSALS;
+            if (i + 1 >= argc)
+            {
+                LOG("ERROR: You need to pass PROPOSAL_INDEX_OR_GROUP! E.g.: 0, \"active\", or \"finished\".");
+                exit(1);
+            }
+            g_proposalString = argv[i + 1];
+            i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if (strcmp(argv[i], "-gqmpropvote") == 0)
+        {
+            g_cmd = GQMPROP_VOTE;
+            if (i + 2 >= argc)
+            {
+                LOG("ERROR: You need to pass PROPOSAL_INDEX and VOTE_VALUE!");
+                exit(1);
+            }
+            g_proposalString = argv[i + 1];
+            g_voteValueString = argv[i + 2];
+            i += 3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if (strcmp(argv[i], "-gqmpropgetvote") == 0)
+        {
+            g_cmd = GQMPROP_GET_VOTE;
+            ++i;
+            if (i >= argc)
+            {
+                LOG("ERROR: You need to pass PROPOSAL_INDEX!");
+                exit(1);
+            }
+            g_proposalString = argv[i];
+            ++i;
+            if (i < argc)
+            {
+                g_requestedIdentity = argv[i];
+                ++i;
+            }
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if (strcmp(argv[i], "-gqmpropgetresults") == 0)
+        {
+            g_cmd = GQMPROP_GET_VOTING_RESULTS;
+            if (i + 1 >= argc)
+            {
+                LOG("ERROR: You need to pass PROPOSAL_INDEX!");
+                exit(1);
+            }
+            g_proposalString = argv[i + 1];
+            i += 2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if (strcmp(argv[i], "-gqmpropgetrevdonation") == 0)
+        {
+            g_cmd = GQMPROP_GET_REV_DONATION;
+            i += 1;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+
+        /**********************
+         **** CCF COMMANDS ****
+         **********************/
+
+        if (strcmp(argv[i], "-ccfsetproposal") == 0)
+        {
+            g_cmd = CCF_SET_PROPOSAL;
+            g_proposalString = argv[i + 1];
+            i += 2;
+            CHECK_OVER_PARAMETERS;
+            break;
+        }
+
+        if (strcmp(argv[i], "-ccfclearproposal") == 0)
+        {
+            g_cmd = CCF_CLEAR_PROPOSAL;
+            i += 1;
+            CHECK_OVER_PARAMETERS;
+            break;
+        }
+
+        if (strcmp(argv[i], "-ccfgetproposals") == 0)
+        {
+            g_cmd = CCF_GET_PROPOSALS;
+            if (i + 1 >= argc)
+            {
+                LOG("ERROR: You need to pass PROPOSAL_INDEX_OR_GROUP! E.g.: 0, \"active\", or \"finished\".");
+                exit(1);
+            }
+            g_proposalString = argv[i + 1];
+            i += 2;
+            CHECK_OVER_PARAMETERS;
+            break;
+        }
+
+        if (strcmp(argv[i], "-ccfvote") == 0)
+        {
+            g_cmd = CCF_VOTE;
+            if (i + 2 >= argc)
+            {
+                LOG("ERROR: You need to pass PROPOSAL_INDEX and VOTE_VALUE!");
+                exit(1);
+            }
+            g_proposalString = argv[i + 1];
+            g_voteValueString = argv[i + 2];
+            i += 3;
+            CHECK_OVER_PARAMETERS;
+            break;
+        }
+
+        if (strcmp(argv[i], "-ccfgetvote") == 0)
+        {
+            g_cmd = CCF_GET_VOTE;
+            ++i;
+            if (i >= argc)
+            {
+                LOG("ERROR: You need to pass PROPOSAL_INDEX!");
+                exit(1);
+            }
+            g_proposalString = argv[i];
+            ++i;
+            if (i < argc)
+            {
+                g_requestedIdentity = argv[i];
+                ++i;
+            }
+            CHECK_OVER_PARAMETERS;
+            break;
+        }
+
+        if (strcmp(argv[i], "-ccfgetresults") == 0)
+        {
+            g_cmd = CCF_GET_VOTING_RESULTS;
+            if (i + 1 >= argc)
+            {
+                LOG("ERROR: You need to pass PROPOSAL_INDEX!");
+                exit(1);
+            }
+            g_proposalString = argv[i + 1];
+            i += 2;
+            CHECK_OVER_PARAMETERS;
+            break;
+        }
+
+        if (strcmp(argv[i], "-ccflatesttransfers") == 0)
+        {
+            g_cmd = CCF_GET_LATEST_TRANSFERS;
+            i += 1;
+            CHECK_OVER_PARAMETERS;
+            break;
+        }
+
+
+        if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "-force") == 0)
+        {
+            g_force = true;
+        }
+
+        /**********************
+         ****QEARM COMMAND***
+         **********************/
+
+        if(strcmp(argv[i], "-qearnlock") == 0)
+        {
+            g_cmd = QEARN_LOCK;
+            g_qearn_lock_amount = charToNumber(argv[i + 1]);
+            i+=2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if(strcmp(argv[i], "-qearnunlock") == 0)
+        {
+            g_cmd = QEARN_UNLOCK;
+            g_qearn_unlock_amount = charToNumber(argv[i + 1]);
+            g_qearn_locked_epoch = charToNumber(argv[i + 2]);
+            i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if(strcmp(argv[i], "-qearngetlockinfoperepoch") == 0)
+        {
+            g_cmd = QEARN_GET_INFO_PER_EPOCH;
+            g_qearn_getinfo_epoch = charToNumber(argv[i + 1]);
+            i+=2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if(strcmp(argv[i], "-qearngetuserlockedinfo") == 0)
+        {
+            g_cmd = QEARN_GET_USER_LOCKED_INFO;
+            g_requestedIdentity = argv[i+1];
+            g_qearn_getinfo_epoch = charToNumber(argv[i + 2]);
+            i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+        if(strcmp(argv[i], "-qearngetstateofround") == 0)
+        {
+            g_cmd = QEARN_GET_STATE_OF_ROUND;
+            g_qearn_getinfo_epoch = charToNumber(argv[i + 1]);
+            i+=2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-qearngetuserlockstatus") == 0)
+        {
+            g_cmd = QEARN_GET_USER_LOCK_STATUS;
+            g_requestedIdentity = argv[i+1];
+            i+=2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-qearngetunlockingstatus") == 0)
+        {
+            g_cmd = QEARN_GET_UNLOCKING_STATUS;
+            g_requestedIdentity = argv[i+1];
+            i+=2;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidbalanceofmicrotoken") == 0) {
+            g_cmd = VLIQUID_BALANCE_OF_MICRO_TOKEN;
+            g_vliquid_micro_token_asset_name = argv[i+1];
+            g_vliquid_micro_token_issuer = argv[i+2];
+            g_vliquid_micro_token_owner = argv[i+3];
+            i += 4;
             CHECK_OVER_PARAMETERS
             break;
         }
