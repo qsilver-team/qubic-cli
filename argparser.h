@@ -218,6 +218,26 @@ void print_help(){
     printf("\t\tSwap token to QU in a specific pool. INPUT_TOKEN_INFO format: 'assetName,issuer'\n");
     printf("\t-vliquidswapfromqu <LIQUID_ID> <OUTPUT_TOKEN_INFO> <QU_AMOUNT>\n");
     printf("\t\tSwap QU to a specify token in a specific pool. OUTPUT_TOKEN_INFO format: 'assetName,issuer'\n");
+    printf("\t-vliquidswaptoqwallet <LIQUID_ID> <INPUT_TOKEN_INFO> <INPUT_AMOUNT>\n");
+    printf("\t\tSwap token to QWallet in a specific pool. INPUT_TOKEN_INFO format: 'assetName,issuer'\n");
+    printf("\t-vliquidswapfromqwallet <LIQUID_ID> <OUTPUT_TOKEN_INFO> <QWALLET_AMOUNT>\n");
+    printf("\t\tSwap QWallet to a specify token in a specific pool. OUTPUT_TOKEN_INFO format: 'assetName,issuer'\n");
+    printf("\t-vliquidswapqutoqwallet <LIQUID_ID> <QU_AMOUNT>\n");
+    printf("\t\tSwap QU to QWallet in a specific pool. QU_AMOUNT is the amount of QU tokens to be swapped.\n");
+    printf("\t-vliquidswapqwallettoqu <LIQUID_ID> <QWALLET_AMOUNT>\n");
+    printf("\t\tSwap QWallet to QU in a specific pool. QWALLET_AMOUNT is the amount of QWallet tokens to be swapped.\n");
+    printf("\t-vliquidsingleswap <LIQUID_ID> <INPUT_TOKEN_INFO> <OUTPUT_TOKEN_INFO> <INPUT_AMOUNT>\n");
+    printf("\t\tSwap tokens in a specific pool. INPUT_TOKEN_INFO and OUTPUT_TOKEN_INFO format: 'assetName,issuer'\n");
+    printf("\t-vliquidcrossswap <LIQUID_ID_A> <INPUT_TOKEN_INFO> <INPUT_AMOUNT> <LIQUID_ID_B> <OUTPUT_TOKEN_INFO>\n");
+    printf("\t\tSwap tokens from a specific pool to another pool. INPUT_TOKEN_INFO and OUTPUT_TOKEN_INFO format: 'assetName,issuer'\n");
+    printf("\t-vliquidinitializestakingpool <LIQUID_ID> <BONUS_TOKEN_INFO>\n");
+    printf("\t\tInitialize a staking pool. LIQUID_ID is the ID of the liquidity pool, BONUS_TOKEN_INFO format:'assetName,issuer'\n");
+    printf("\t-vliquiddepositebonustoken <LIQUID_ID> <BONUS_TOKEN_AMOUNT>\n");
+    printf("\t\tDeposit bonus tokens into a specific liquidity pool. LIQUID_ID is the ID of the liquidity pool, BONUS_TOKEN_AMOUNT is the amount of bonus tokens to be deposited.\n");
+    printf("\t-vliquidstake <LIQUID_ID> <LP_AMOUNT>\n");
+    printf("\t\tStake LP tokens into a specific liquidity pool. LIQUID_ID is the ID of the liquidity pool, LP_AMOUNT is the amount of LP tokens to be staked.\n");
+    printf("\t-vliquidunstake <LIQUID_ID> <LP_AMOUNT>\n");
+    printf("\t\tUnstake LP tokens from a specific liquidity pool. LIQUID_ID is the ID of the liquidity pool, LP_AMOUNT is the amount of LP tokens to be unstaked.\n");
 }
 
 static long long charToNumber(char* a)
@@ -1204,6 +1224,113 @@ void parseArgument(int argc, char** argv){
             g_vliquid_output_token_info = argv[i + 2];
             g_vliquid_qu_amount = charToNumber(argv[i + 3]);
             i+=4;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidswaptoqwallet") == 0)
+        {
+            g_cmd = VLIQUID_SWAP_TO_QWALLET;
+            g_vliquid_liquid_id = charToNumber(argv[i+1]);
+            g_vliquid_input_token_info = argv[i+2];
+            g_vliquid_input_amount = charToNumber(argv[i+3]);
+            i+=4;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidswapfromqwallet") == 0)
+        {
+            g_cmd = VLIQUID_SWAP_FROM_QWALLET;
+            g_vliquid_liquid_id = charToNumber(argv[i+1]);
+            g_vliquid_output_token_info = argv[i+2];
+            g_vliquid_qwallet_amount = charToNumber(argv[i+3]);
+            i+=4;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidswapqutoqwallet") == 0)
+        {
+            g_cmd = VLIQUID_SWAP_QU_TO_QWALLET;
+            g_vliquid_liquid_id = charToNumber(argv[i+1]);
+            g_vliquid_qu_amount = charToNumber(argv[i+2]);
+            i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidswapqwallettoqu") == 0)
+        {
+            g_cmd = VLIQUID_SWAP_QWALLET_TO_QU;
+            g_vliquid_liquid_id = charToNumber(argv[i+1]);
+            g_vliquid_qwallet_amount = charToNumber(argv[i+2]);
+            i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidsingleswap") == 0)
+        {
+            g_cmd = VLIQUID_SINGLE_SWAP;
+            g_vliquid_liquid_id = charToNumber(argv[i+1]);
+            g_vliquid_input_token_info = argv[i+2];
+            g_vliquid_output_token_info = argv[i+3];
+            g_vliquid_input_amount = charToNumber(argv[i+4]);
+            i+=5;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidcrossswap") == 0)
+        {
+            g_cmd = VLIQUID_CROSS_SWAP;
+            g_vliquid_liquid_id = charToNumber(argv[i+1]);
+            g_vliquid_input_token_info = argv[i+2];
+            g_vliquid_input_amount = charToNumber(argv[i+3]);
+            g_vliquid_liquid_id_b = charToNumber(argv[i+4]);
+            g_vliquid_output_token_info = argv[i+5];
+            i+=6;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidinitializestakingpool") == 0)
+        {
+            g_cmd = VLIQUID_INITIALIZE_STAKING_POOL;
+            g_vliquid_liquid_id = charToNumber(argv[i+1]);
+            g_vliquid_bonus_token_info = argv[i+2];
+            i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquiddepositebonustoken") == 0)
+        {
+            g_cmd = VLIQUID_DEPOSITE_BONUS_TOKEN;
+            g_vliquid_liquid_id = charToNumber(argv[i+1]);
+            g_vliquid_bonus_token_amount = charToNumber(argv[i+2]);
+            i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidstake") == 0)
+        {
+            g_cmd = VLIQUID_STAKE;
+            g_vliquid_liquid_id = charToNumber(argv[i+1]);
+            g_vliquid_lp_amount = charToNumber(argv[i+2]);
+            i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidunstake") == 0)
+        {
+            g_cmd = VLIQUID_UNSTAKE;
+            g_vliquid_liquid_id = charToNumber(argv[i+1]);
+            g_vliquid_lp_amount = charToNumber(argv[i+2]);
+            i+=3;
             CHECK_OVER_PARAMETERS
             break;
         }

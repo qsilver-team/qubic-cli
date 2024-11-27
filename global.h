@@ -102,3 +102,6 @@ uint16_t g_vliquid_initial_liquid = 0;
 uint8_t g_vliquid_fee_rate = 0;
 char* g_vliquid_input_token_info = nullptr;
 char* g_vliquid_output_token_info = nullptr;
+uint64_t g_vliquid_liquid_id_b = 0;
+uint64_t g_vliquid_bonus_token_amount = 0;
+char* g_vliquid_bonus_token_info = nullptr;

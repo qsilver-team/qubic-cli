@@ -1039,3 +1039,869 @@ void vliquidSwapFromQU(const char* nodeIp, int nodePort,
     LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
     LOG("to check your tx confirmation status\n");
 }
+
+void vliquidSwapToQwallet(const char* nodeIp, int nodePort,
+                          const char* seed,
+                          uint64_t liquidId,
+                          const char* inputTokenInfo,
+                          uint64_t inputAmount,
+                          uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        SwapToQwallet_input stqi;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_SWAP_TO_QWALLET;
+    packet.transaction.inputSize = sizeof(SwapToQwallet_input);
+
+    // Parse input token info and fill the input
+    std::string str(inputTokenInfo);
+    std::stringstream ss(str);
+    std::string token;
+    std::vector<std::string> fields;
+    
+    while (std::getline(ss, token, ',')) {
+        fields.push_back(token);
+    }
+    
+    if (fields.size() == 2) {
+        memcpy(&packet.stqi.inputTokenInfo.assetName, fields[0].c_str(), 8);
+        getPublicKeyFromIdentity(fields[1].c_str(), packet.stqi.inputTokenInfo.issuer);
+    }
+    
+    packet.stqi.liquidId = liquidId;
+    packet.stqi.inputAmount = inputAmount;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(SwapToQwallet_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(SwapToQwallet_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(SwapToQwallet_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.stqi));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
+
+void vliquidSwapFromQwallet(const char* nodeIp, int nodePort,
+                            const char* seed,
+                            uint64_t liquidId,
+                            const char* outputTokenInfo,
+                            uint64_t qwalletAmount,
+                            uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        SwapFromQwallet_input sfqi;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_SWAP_FROM_QWALLET;
+    packet.transaction.inputSize = sizeof(SwapFromQwallet_input);
+
+    // Parse output token info and fill the input
+    std::string str(outputTokenInfo);
+    std::stringstream ss(str);
+    std::string token;
+    std::vector<std::string> fields;
+    
+    while (std::getline(ss, token, ',')) {
+        fields.push_back(token);
+    }
+    
+    if (fields.size() == 2) {
+        memcpy(&packet.sfqi.outputTokenInfo.assetName, fields[0].c_str(), 8);
+        getPublicKeyFromIdentity(fields[1].c_str(), packet.sfqi.outputTokenInfo.issuer);
+    }
+    
+    packet.sfqi.liquidId = liquidId;
+    packet.sfqi.qwalletAmount = qwalletAmount;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(SwapFromQwallet_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(SwapFromQwallet_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(SwapFromQwallet_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.sfqi));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
+
+void vliquidSwapQUToQwallet(const char* nodeIp, int nodePort,
+                            const char* seed,
+                            uint64_t liquidId,
+                            uint64_t quAmount,
+                            uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        SwapQUToQwallet_input sqtqi;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_SWAP_QU_TO_QWALLET;
+    packet.transaction.inputSize = sizeof(SwapQUToQwallet_input);
+
+    // Fill the input
+    packet.sqtqi.liquidId = liquidId;
+    packet.sqtqi.quAmount = quAmount;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(SwapQUToQwallet_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(SwapQUToQwallet_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(SwapQUToQwallet_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.sqtqi));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
+
+void vliquidSwapQwalletToQU(const char* nodeIp, int nodePort,
+                            const char* seed,
+                            uint64_t liquidId,
+                            uint64_t qwalletAmount,
+                            uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        SwapQwalletToQU_input sqtqi;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_SWAP_QWALLET_TO_QU;
+    packet.transaction.inputSize = sizeof(SwapQwalletToQU_input);
+
+    // Fill the input
+    packet.sqtqi.liquidId = liquidId;
+    packet.sqtqi.qwalletAmount = qwalletAmount;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(SwapQwalletToQU_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(SwapQwalletToQU_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(SwapQwalletToQU_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.sqtqi));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
+
+void vliquidSingleSwap(const char* nodeIp, int nodePort,
+                       const char* seed,
+                       uint64_t liquidId,
+                       const char* inputTokenInfo,
+                       const char* outputTokenInfo,
+                       uint64_t inputAmount,
+                       uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        SingleSwap_input ssi;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_SINGLE_SWAP;
+    packet.transaction.inputSize = sizeof(SingleSwap_input);
+
+    // Parse input and output token info and fill the input
+    std::string inputStr(inputTokenInfo);
+    std::stringstream inputSS(inputStr);
+    std::string inputToken;
+    std::vector<std::string> inputFields;
+    
+    while (std::getline(inputSS, inputToken, ',')) {
+        inputFields.push_back(inputToken);
+    }
+    
+    if (inputFields.size() == 2) {
+        memcpy(&packet.ssi.inputTokenInfo.assetName, inputFields[0].c_str(), 8);
+        getPublicKeyFromIdentity(inputFields[1].c_str(), packet.ssi.inputTokenInfo.issuer);
+    }
+
+    std::string outputStr(outputTokenInfo);
+    std::stringstream outputSS(outputStr);
+    std::string outputToken;
+    std::vector<std::string> outputFields;
+    
+    while (std::getline(outputSS, outputToken, ',')) {
+        outputFields.push_back(outputToken);
+    }
+    
+    if (outputFields.size() == 2) {
+        memcpy(&packet.ssi.outputTokenInfo.assetName, outputFields[0].c_str(), 8);
+        getPublicKeyFromIdentity(outputFields[1].c_str(), packet.ssi.outputTokenInfo.issuer);
+    }
+    
+    packet.ssi.liquidId = liquidId;
+    packet.ssi.inputAmount = inputAmount;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(SingleSwap_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(SingleSwap_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(SingleSwap_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.ssi));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
+
+void vliquidCrossSwap(const char* nodeIp, int nodePort,
+                      const char* seed,
+                      uint64_t liquidIdA,
+                      const char* inputTokenInfoA,
+                      uint64_t inputAmountA,
+                      uint64_t liquidIdB,
+                      const char* outputTokenInfoB,
+                      uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        CrossSwap_input csi;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_CROSS_SWAP;
+    packet.transaction.inputSize = sizeof(CrossSwap_input);
+
+    // Parse input token info A and fill the input
+    std::string inputStrA(inputTokenInfoA);
+    std::stringstream inputSSA(inputStrA);
+    std::string inputTokenA;
+    std::vector<std::string> inputFieldsA;
+    
+    while (std::getline(inputSSA, inputTokenA, ',')) {
+        inputFieldsA.push_back(inputTokenA);
+    }
+    
+    if (inputFieldsA.size() == 2) {
+        memcpy(&packet.csi.inputTokenInfoA.assetName, inputFieldsA[0].c_str(), 8);
+        getPublicKeyFromIdentity(inputFieldsA[1].c_str(), packet.csi.inputTokenInfoA.issuer);
+    }
+
+    // Parse output token info B and fill the input
+    std::string outputStrB(outputTokenInfoB);
+    std::stringstream outputSSB(outputStrB);
+    std::string outputTokenB;
+    std::vector<std::string> outputFieldsB;
+    
+    while (std::getline(outputSSB, outputTokenB, ',')) {
+        outputFieldsB.push_back(outputTokenB);
+    }
+    
+    if (outputFieldsB.size() == 2) {
+        memcpy(&packet.csi.outputTokenInfoB.assetName, outputFieldsB[0].c_str(), 8);
+        getPublicKeyFromIdentity(outputFieldsB[1].c_str(), packet.csi.outputTokenInfoB.issuer);
+    }
+    
+    packet.csi.liquidIdA = liquidIdA;
+    packet.csi.inputAmountA = inputAmountA;
+    packet.csi.liquidIdB = liquidIdB;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(CrossSwap_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(CrossSwap_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(CrossSwap_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.csi));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
+
+void vliquidInitializeStakingPool(const char* nodeIp, int nodePort,
+                                  const char* seed,
+                                  uint64_t liquidId,
+                                  const char* bonusTokenInfo,
+                                  uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        InitializeStakingPool_input ispi;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_INITIALIZE_STAKING_POOL;
+    packet.transaction.inputSize = sizeof(InitializeStakingPool_input);
+
+    // Parse bonus token info and fill the input
+    std::string bonusStr(bonusTokenInfo);
+    std::stringstream bonusSS(bonusStr);
+    std::string bonusToken;
+    std::vector<std::string> bonusFields;
+    
+    while (std::getline(bonusSS, bonusToken, ',')) {
+        bonusFields.push_back(bonusToken);
+    }
+    
+    if (bonusFields.size() == 2) {
+        memcpy(&packet.ispi.bonusTokenInfo.assetName, bonusFields[0].c_str(), 8);
+        getPublicKeyFromIdentity(bonusFields[1].c_str(), packet.ispi.bonusTokenInfo.issuer);
+    }
+    
+    packet.ispi.liquidId = liquidId;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(InitializeStakingPool_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(InitializeStakingPool_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(InitializeStakingPool_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.ispi));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
+
+void vliquidDepositeBonusToken(const char* nodeIp, int nodePort,
+                               const char* seed,
+                               uint64_t liquidId,
+                               uint64_t bonusTokenAmount,
+                               uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        DepositeBonusToken_input dbti;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_DEPOSITE_BONUS_TOKEN;
+    packet.transaction.inputSize = sizeof(DepositeBonusToken_input);
+
+    // Fill the input
+    packet.dbti.liquidId = liquidId;
+    packet.dbti.bonusTokenAmount = bonusTokenAmount;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(DepositeBonusToken_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(DepositeBonusToken_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(DepositeBonusToken_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.dbti));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
+
+void vliquidStake(const char* nodeIp, int nodePort,
+                  const char* seed,
+                  uint64_t liquidId,
+                  uint64_t lpAmount,
+                  uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        Stake_input si;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_STAKE;
+    packet.transaction.inputSize = sizeof(Stake_input);
+
+    // Fill the input
+    packet.si.liquidId = liquidId;
+    packet.si.lpAmount = lpAmount;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(Stake_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(Stake_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(Stake_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.si));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
+
+void vliquidUnstake(const char* nodeIp, int nodePort,
+                    const char* seed,
+                    uint64_t liquidId,
+                    uint64_t lpAmount,
+                    uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        Unstake_input ui;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_UNSTAKE;
+    packet.transaction.inputSize = sizeof(Unstake_input);
+
+    // Fill the input
+    packet.ui.liquidId = liquidId;
+    packet.ui.lpAmount = lpAmount;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(Unstake_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(Unstake_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(Unstake_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.ui));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}

@@ -551,6 +551,112 @@ int run(int argc, char* argv[])
                               g_vliquid_qu_amount,
                               g_offsetScheduledTick);
             break;
+        case VLIQUID_SWAP_TO_QWALLET:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSwapToQwallet(g_nodeIp, g_nodePort,
+                                g_seed,
+                                g_vliquid_liquid_id,
+                                g_vliquid_input_token_info,
+                                g_vliquid_input_amount,
+                                g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_SWAP_FROM_QWALLET:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSwapFromQwallet(g_nodeIp, g_nodePort,
+                                  g_seed,
+                                  g_vliquid_liquid_id,
+                                  g_vliquid_output_token_info,
+                                  g_vliquid_qwallet_amount,
+                                  g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_SWAP_QU_TO_QWALLET:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSwapQUToQwallet(g_nodeIp, g_nodePort,
+                                  g_seed,
+                                  g_vliquid_liquid_id,
+                                  g_vliquid_qu_amount,
+                                  g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_SWAP_QWALLET_TO_QU:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSwapQwalletToQU(g_nodeIp, g_nodePort,
+                                  g_seed,
+                                  g_vliquid_liquid_id,
+                                  g_vliquid_qwallet_amount,
+                                  g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_SINGLE_SWAP:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSingleSwap(g_nodeIp, g_nodePort,
+                             g_seed,
+                             g_vliquid_liquid_id,
+                             g_vliquid_input_token_info,
+                             g_vliquid_output_token_info,
+                             g_vliquid_input_amount,
+                             g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_CROSS_SWAP:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidCrossSwap(g_nodeIp, g_nodePort,
+                            g_seed,
+                            g_vliquid_liquid_id,
+                            g_vliquid_input_token_info,
+                            g_vliquid_input_amount,
+                            g_vliquid_liquid_id_b,
+                            g_vliquid_output_token_info,
+                            g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_INITIALIZE_STAKING_POOL:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidInitializeStakingPool(g_nodeIp, g_nodePort,
+                                       g_seed,
+                                       g_vliquid_liquid_id,
+                                       g_vliquid_bonus_token_info,
+                                       g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_DEPOSITE_BONUS_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidDepositeBonusToken(g_nodeIp, g_nodePort,
+                                     g_seed,
+                                     g_vliquid_liquid_id,
+                                     g_vliquid_bonus_token_amount,
+                                     g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_STAKE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidStake(g_nodeIp, g_nodePort,
+                         g_seed,
+                         g_vliquid_liquid_id,
+                         g_vliquid_lp_amount,
+                         g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_UNSTAKE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidUnstake(g_nodeIp, g_nodePort,
+                          g_seed,
+                          g_vliquid_liquid_id,
+                          g_vliquid_lp_amount,
+                          g_offsetScheduledTick);
+            break;
         default:
             printf("Unexpected command!\n");
             break;
