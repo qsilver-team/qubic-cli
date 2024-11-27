@@ -530,6 +530,16 @@ int run(int argc, char* argv[])
                                 g_vliquid_liquid_id,
                                 g_offsetScheduledTick);
             break;
+        case VLIQUID_SWAP_TO_QU:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSwapToQU(g_nodeIp, g_nodePort,
+                            g_seed,
+                            g_vliquid_liquid_id,
+                            g_vliquid_input_token_info,
+                            g_vliquid_input_amount,
+                            g_offsetScheduledTick);
+            break;
         default:
             printf("Unexpected command!\n");
             break;

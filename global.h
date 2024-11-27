@@ -100,3 +100,4 @@ uint64_t g_vliquid_qu_shares = 0;
 uint8_t g_vliquid_qu_weight = 0;
 uint16_t g_vliquid_initial_liquid = 0;
 uint8_t g_vliquid_fee_rate = 0;
+char* g_vliquid_input_token_info = nullptr;
