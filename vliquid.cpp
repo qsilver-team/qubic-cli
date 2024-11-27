@@ -701,3 +701,80 @@ void parseTokensString(const char* tokensStr, uint8_t tokenLength, Token* tokens
         }
     }
 }
+
+void vliquidAddLiquid(const char* nodeIp, int nodePort,
+                      const char* seed,
+                      uint64_t tokenContribution,
+                      uint64_t liquidId,
+                      uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        AddLiquid_input ali;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_ADD_LIQUID;
+    packet.transaction.inputSize = sizeof(AddLiquid_input);
+
+    // Fill the input
+    packet.ali.tokenContribution = tokenContribution;
+    packet.ali.liquidId = liquidId;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(AddLiquid_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(AddLiquid_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(AddLiquid_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.ali));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
