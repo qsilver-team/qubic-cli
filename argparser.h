@@ -211,7 +211,9 @@ void print_help(){
     printf("\t-vliquidcreateliquid <TOKENS> <TOKEN_LENGTH> <QU_SHARES> <QU_WEIGHT> <INITIAL_LIQUID> <FEE_RATE>\n");
     printf("\t\tCreate a new liquidity pool. TOKENS format: 'assetName1,issuer1,isMicroToken1,balance1,weight1;assetName2,...'\n");
     printf("\t-vliquidaddliquid <TOKEN_CONTRIBUTION> <LIQUID_ID>\n");
-    printf("\t\tAdd liquidity to a specific pool. TOKENS format: 'assetName1,issuer1,isMicroToken1,balance1,weight1;assetName2,...'\n");
+    printf("\t\tAdd liquidity to a specific pool.\n");
+    printf("\t-vliquidremoveliquid <TOKEN_CONTRIBUTION> <LIQUID_ID>\n");
+    printf("\t\tRemove liquidity from a specific pool.\n");
 }
 
 static long long charToNumber(char* a)
@@ -1163,6 +1165,16 @@ void parseArgument(int argc, char** argv){
         if(strcmp(argv[i], "-vliquidaddliquid") == 0)
         {
             g_cmd = VLIQUID_ADD_LIQUID;
+            g_vliquid_token_contribution = charToNumber(argv[i+1]);
+            g_vliquid_liquid_id = charToNumber(argv[i+2]);
+            i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidremoveliquid") == 0)
+        {
+            g_cmd = VLIQUID_REMOVE_LIQUID;
             g_vliquid_token_contribution = charToNumber(argv[i+1]);
             g_vliquid_liquid_id = charToNumber(argv[i+2]);
             i+=3;
