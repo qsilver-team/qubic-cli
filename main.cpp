@@ -13,6 +13,7 @@
 #include "qx.h"
 #include "proposal.h"
 #include "qearn.h"
+#include "vliquid.h"
 
 int run(int argc, char* argv[])
 {
@@ -410,7 +411,13 @@ int run(int argc, char* argv[])
             sanityCheckNode(g_nodeIp, g_nodePort);
             qearnGetEndedStatus(g_nodeIp, g_nodePort, g_requestedIdentity);
             break;
-
+        case VLIQUID_BALANCE_OF_MICRO_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            sanityCheckValidString(g_vliquid_micro_token_owner);
+            vliquidBalanceOfMicroToken(g_nodeIp, g_nodePort, g_vliquid_micro_token_asset_name, g_vliquid_micro_token_issuer, g_vliquid_micro_token_owner);
+            break;
         default:
             printf("Unexpected command!\n");
             break;
