@@ -78,3 +78,20 @@ uint64_t g_qearn_lock_amount;
 uint64_t g_qearn_unlock_amount;
 uint32_t g_qearn_locked_epoch;
 uint32_t g_qearn_getinfo_epoch;
+
+// vliquid
+char* g_vliquid_micro_token_asset_name = nullptr;
+char* g_vliquid_micro_token_issuer = nullptr;
+char* g_vliquid_micro_token_owner = nullptr;
+char* g_vliquid_micro_token_recipient = nullptr;
+char* g_vliquid_micro_token_spender = nullptr;
+int64_t g_vliquid_expensive_token_amount = 0;
+int64_t g_vliquid_micro_token_amount = 0;
+char* g_vliquid_create_liquid_file_path = nullptr;
+uint64_t g_vliquid_token_contribution = 0;
+uint64_t g_vliquid_liquid_id = 0;
+uint64_t g_vliquid_input_amount = 0;
+uint64_t g_vliquid_qu_amount = 0;
+uint64_t g_vliquid_qwallet_amount = 0;
+uint64_t g_vliquid_input_amount_a = 0;
+uint64_t g_vliquid_lp_amount = 0;
