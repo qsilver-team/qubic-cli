@@ -208,6 +208,8 @@ void print_help(){
     printf("\t\tTransfer micro tokens to a recipient.\n");
     printf("\t-vliquidtransferfrommicrotoken <ASSET_NAME> <ISSUER> <SPENDER> <RECIPIENT> <AMOUNT>\n");
     printf("\t\tTransfer micro tokens from a spender to a recipient using allowance.\n");
+    printf("\t-vliquidcreateliquid <TOKENS> <TOKEN_LENGTH> <QU_SHARES> <QU_WEIGHT> <INITIAL_LIQUID> <FEE_RATE>\n");
+    printf("\t\tCreate a new liquidity pool. TOKENS format: 'assetName1,issuer1,isMicroToken1,balance1,weight1;assetName2,...'\n");
 }
 
 static long long charToNumber(char* a)
@@ -1138,6 +1140,20 @@ void parseArgument(int argc, char** argv){
             g_vliquid_micro_token_recipient = argv[i+4];
             g_vliquid_micro_token_amount = charToNumber(argv[i+5]);
             i+=6;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidcreateliquid") == 0)
+        {
+            g_cmd = VLIQUID_CREATE_LIQUID;
+            g_vliquid_tokens = argv[i+1];
+            g_vliquid_token_length = uint8_t(charToNumber(argv[i+2]));
+            g_vliquid_qu_shares = uint64_t(charToNumber(argv[i+3]));
+            g_vliquid_qu_weight = uint8_t(charToNumber(argv[i+4]));
+            g_vliquid_initial_liquid = uint16_t(charToNumber(argv[i+5]));
+            g_vliquid_fee_rate = uint8_t(charToNumber(argv[i+6]));
+            i+=7;
             CHECK_OVER_PARAMETERS
             break;
         }

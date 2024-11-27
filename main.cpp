@@ -498,6 +498,20 @@ int run(int argc, char* argv[])
                                          g_vliquid_micro_token_amount,
                                          g_offsetScheduledTick);
             break;
+        case VLIQUID_CREATE_LIQUID:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckValidString(g_vliquid_tokens);
+            vliquidCreateLiquid(g_nodeIp, g_nodePort,
+                                g_seed,
+                                g_vliquid_tokens,
+                                g_vliquid_token_length,
+                                g_vliquid_qu_shares,
+                                g_vliquid_qu_weight,
+                                g_vliquid_initial_liquid,
+                                g_vliquid_fee_rate,
+                                g_offsetScheduledTick);
+            break;
         default:
             printf("Unexpected command!\n");
             break;

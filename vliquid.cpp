@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <cstring>
+#include <sstream>
 #include "structs.h"
 #include "walletUtils.h"
 #include "keyUtils.h"
@@ -586,4 +587,117 @@ void vliquidTransferFromMicroToken(const char* nodeIp, int nodePort,
     printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.tfmti));
     LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
     LOG("to check your tx confirmation status\n");
+}
+
+void vliquidCreateLiquid(const char* nodeIp, int nodePort,
+                        const char* seed,
+                        const char* tokens,
+                        uint8_t tokenLength,
+                        uint64_t quShares,
+                        uint8_t quWeight,
+                        uint16_t initialLiquid,
+                        uint8_t feeRate,
+                        uint32_t scheduledTickOffset) {
+    auto qc = make_qc(nodeIp, nodePort);
+    
+    // Add signing-related variables
+    uint8_t privateKey[32] = {0};
+    uint8_t sourcePublicKey[32] = {0};
+    uint8_t destPublicKey[32] = {0};
+    uint8_t subSeed[32] = {0};
+    uint8_t digest[32] = {0};
+    uint8_t signature[64] = {0};
+    char txHash[128] = {0};
+
+    // Generate keys from seed
+    getSubseedFromSeed((uint8_t*)seed, subSeed);
+    getPrivateKeyFromSubSeed(subSeed, privateKey);
+    getPublicKeyFromPrivateKey(privateKey, sourcePublicKey);
+
+    ((uint64_t*)destPublicKey)[0] = VLIQUID_CONTRACT_INDEX;
+    ((uint64_t*)destPublicKey)[1] = 0;
+    ((uint64_t*)destPublicKey)[2] = 0;
+    ((uint64_t*)destPublicKey)[3] = 0;
+
+    struct {
+        RequestResponseHeader header;
+        Transaction transaction;
+        CreateLiquid_input cli;
+        uint8_t sig[SIGNATURE_SIZE];
+    } packet;
+
+    // Set up transaction
+    memcpy(packet.transaction.sourcePublicKey, sourcePublicKey, 32);
+    memcpy(packet.transaction.destinationPublicKey, destPublicKey, 32);
+    packet.transaction.amount = 1000000; // Set appropriate fee
+    uint32_t currentTick = getTickNumberFromNode(qc);
+    uint32_t scheduledTick = currentTick + scheduledTickOffset;
+    packet.transaction.tick = scheduledTick;
+    packet.transaction.inputType = VLIQUID_CREATE_LIQUID;
+    packet.transaction.inputSize = sizeof(CreateLiquid_input);
+
+    // Parse tokens string and fill the input
+    parseTokensString(tokens, tokenLength, packet.cli.tokens);
+    packet.cli.tokenLength = tokenLength;
+    packet.cli.quShares = quShares;
+    packet.cli.quWeight = quWeight;
+    packet.cli.initialLiquid = initialLiquid;
+    packet.cli.feeRate = feeRate;
+
+    // Sign the packet
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(CreateLiquid_input),
+                   digest,
+                   32);
+    sign(subSeed, sourcePublicKey, digest, signature);
+    memcpy(packet.sig, signature, SIGNATURE_SIZE);
+
+    // Set header
+    packet.header.setSize(sizeof(packet.header) + sizeof(Transaction) + sizeof(CreateLiquid_input) + SIGNATURE_SIZE);
+    packet.header.zeroDejavu();
+    packet.header.setType(BROADCAST_TRANSACTION);
+
+    // Send transaction
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Generate transaction hash
+    KangarooTwelve((unsigned char*)&packet.transaction,
+                   sizeof(Transaction) + sizeof(CreateLiquid_input) + SIGNATURE_SIZE,
+                   digest,
+                   32);
+    getTxHashFromDigest(digest, txHash);
+
+    // Log transaction details
+    LOG("Transaction has been sent!\n");
+    printReceipt(packet.transaction, txHash, reinterpret_cast<const uint8_t *>(&packet.cli));
+    LOG("run ./qubic-cli [...] -checktxontick %u %s\n", scheduledTick, txHash);
+    LOG("to check your tx confirmation status\n");
+}
+
+// Helper function to parse tokens string
+void parseTokensString(const char* tokensStr, uint8_t tokenLength, Token* tokens) {
+    std::string str(tokensStr);
+    std::stringstream ss(str);
+    std::string token;
+    int idx = 0;
+    
+    while (std::getline(ss, token, ';') && idx < tokenLength) {
+        std::stringstream tokenSS(token);
+        std::string field;
+        std::vector<std::string> fields;
+        
+        while (std::getline(tokenSS, field, ',')) {
+            fields.push_back(field);
+        }
+        
+        if (fields.size() == 5) {
+            memcpy(&tokens[idx].tokenInfo.assetName, fields[0].c_str(), 8);
+            getPublicKeyFromIdentity(fields[1].c_str(), tokens[idx].tokenInfo.issuer);
+            tokens[idx].tokenInfo.isMicroToken = (fields[2] == "1");
+            tokens[idx].balance = std::stoull(fields[3]);
+            tokens[idx].weight = std::stoul(fields[4]);
+            LOG("Token %d: %s, %s, %s, %llu, %d\n", idx, fields[0].c_str(), fields[1].c_str(), fields[2].c_str(), tokens[idx].balance, tokens[idx].weight);
+            idx++;
+        }
+    }
 }
