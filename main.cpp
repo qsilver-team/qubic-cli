@@ -418,6 +418,245 @@ int run(int argc, char* argv[])
             sanityCheckValidString(g_vliquid_micro_token_owner);
             vliquidBalanceOfMicroToken(g_nodeIp, g_nodePort, g_vliquid_micro_token_asset_name, g_vliquid_micro_token_issuer, g_vliquid_micro_token_owner);
             break;
+        case VLIQUID_MICRO_TOKEN_ALLOWANCE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            sanityCheckValidString(g_vliquid_micro_token_recipient);
+            sanityCheckValidString(g_vliquid_micro_token_spender);
+            vliquidMicroTokenAllowance(g_nodeIp, g_nodePort,
+                                      g_vliquid_micro_token_asset_name,
+                                      g_vliquid_micro_token_issuer,
+                                      g_vliquid_micro_token_recipient,
+                                      g_vliquid_micro_token_spender);
+            break;
+        case VLIQUID_APPROVE_MICRO_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            sanityCheckValidString(g_vliquid_micro_token_recipient);
+            vliquidApproveMicroToken(g_nodeIp, g_nodePort,
+                                    g_seed,
+                                    g_vliquid_micro_token_asset_name,
+                                    g_vliquid_micro_token_issuer,
+                                    g_vliquid_micro_token_recipient,
+                                    g_vliquid_micro_token_amount,
+                                    g_offsetScheduledTick);
+            break;
+        case VLIQUID_CONVERT_TO_MICRO_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            vliquidConvertToMicroToken(g_nodeIp, g_nodePort,
+                                      g_seed,
+                                      g_vliquid_micro_token_asset_name,
+                                      g_vliquid_micro_token_issuer,
+                                      g_vliquid_expensive_token_amount,
+                                      g_offsetScheduledTick);
+            break;
+        case VLIQUID_CONVERT_TO_EXPENSIVE_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            vliquidConvertToExpensiveToken(g_nodeIp, g_nodePort,
+                                          g_seed,
+                                          g_vliquid_micro_token_asset_name,
+                                          g_vliquid_micro_token_issuer,
+                                          g_vliquid_micro_token_amount,
+                                          g_offsetScheduledTick);
+            break;
+        case VLIQUID_TRANSFER_MICRO_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            sanityCheckValidString(g_vliquid_micro_token_recipient);
+            vliquidTransferMicroToken(g_nodeIp, g_nodePort,
+                                     g_seed,
+                                     g_vliquid_micro_token_asset_name,
+                                     g_vliquid_micro_token_issuer,
+                                     g_vliquid_micro_token_recipient,
+                                     g_vliquid_micro_token_amount,
+                                     g_offsetScheduledTick);
+            break;
+        case VLIQUID_TRANSFER_FROM_MICRO_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            sanityCheckValidString(g_vliquid_micro_token_spender);
+            sanityCheckValidString(g_vliquid_micro_token_recipient);
+            vliquidTransferFromMicroToken(g_nodeIp, g_nodePort,
+                                         g_seed,
+                                         g_vliquid_micro_token_asset_name,
+                                         g_vliquid_micro_token_issuer,
+                                         g_vliquid_micro_token_spender,
+                                         g_vliquid_micro_token_recipient,
+                                         g_vliquid_micro_token_amount,
+                                         g_offsetScheduledTick);
+            break;
+        case VLIQUID_CREATE_LIQUID:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckValidString(g_vliquid_tokens);
+            vliquidCreateLiquid(g_nodeIp, g_nodePort,
+                                g_seed,
+                                g_vliquid_tokens,
+                                g_vliquid_token_length,
+                                g_vliquid_qu_shares,
+                                g_vliquid_qu_weight,
+                                g_vliquid_initial_liquid,
+                                g_vliquid_fee_rate,
+                                g_offsetScheduledTick);
+            break;
+        case VLIQUID_ADD_LIQUID:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidAddLiquid(g_nodeIp, g_nodePort,
+                            g_seed,
+                            g_vliquid_token_contribution,
+                            g_vliquid_liquid_id,
+                            g_offsetScheduledTick);
+            break;
+        case VLIQUID_REMOVE_LIQUID:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidRemoveLiquid(g_nodeIp, g_nodePort,
+                                g_seed,
+                                g_vliquid_token_contribution,
+                                g_vliquid_liquid_id,
+                                g_offsetScheduledTick);
+            break;
+        case VLIQUID_SWAP_TO_QU:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSwapToQU(g_nodeIp, g_nodePort,
+                            g_seed,
+                            g_vliquid_liquid_id,
+                            g_vliquid_input_token_info,
+                            g_vliquid_input_amount,
+                            g_offsetScheduledTick);
+            break;
+        case VLIQUID_SWAP_FROM_QU:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckValidString(g_vliquid_output_token_info);
+            vliquidSwapFromQU(g_nodeIp, g_nodePort,
+                              g_seed,
+                              g_vliquid_liquid_id,
+                              g_vliquid_output_token_info,
+                              g_vliquid_qu_amount,
+                              g_offsetScheduledTick);
+            break;
+        case VLIQUID_SWAP_TO_QWALLET:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSwapToQwallet(g_nodeIp, g_nodePort,
+                                g_seed,
+                                g_vliquid_liquid_id,
+                                g_vliquid_input_token_info,
+                                g_vliquid_input_amount,
+                                g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_SWAP_FROM_QWALLET:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSwapFromQwallet(g_nodeIp, g_nodePort,
+                                  g_seed,
+                                  g_vliquid_liquid_id,
+                                  g_vliquid_output_token_info,
+                                  g_vliquid_qwallet_amount,
+                                  g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_SWAP_QU_TO_QWALLET:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSwapQUToQwallet(g_nodeIp, g_nodePort,
+                                  g_seed,
+                                  g_vliquid_liquid_id,
+                                  g_vliquid_qu_amount,
+                                  g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_SWAP_QWALLET_TO_QU:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSwapQwalletToQU(g_nodeIp, g_nodePort,
+                                  g_seed,
+                                  g_vliquid_liquid_id,
+                                  g_vliquid_qwallet_amount,
+                                  g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_SINGLE_SWAP:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidSingleSwap(g_nodeIp, g_nodePort,
+                             g_seed,
+                             g_vliquid_liquid_id,
+                             g_vliquid_input_token_info,
+                             g_vliquid_output_token_info,
+                             g_vliquid_input_amount,
+                             g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_CROSS_SWAP:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidCrossSwap(g_nodeIp, g_nodePort,
+                            g_seed,
+                            g_vliquid_liquid_id,
+                            g_vliquid_input_token_info,
+                            g_vliquid_input_amount,
+                            g_vliquid_liquid_id_b,
+                            g_vliquid_output_token_info,
+                            g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_INITIALIZE_STAKING_POOL:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidInitializeStakingPool(g_nodeIp, g_nodePort,
+                                       g_seed,
+                                       g_vliquid_liquid_id,
+                                       g_vliquid_bonus_token_info,
+                                       g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_DEPOSITE_BONUS_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidDepositeBonusToken(g_nodeIp, g_nodePort,
+                                     g_seed,
+                                     g_vliquid_liquid_id,
+                                     g_vliquid_bonus_token_amount,
+                                     g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_STAKE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidStake(g_nodeIp, g_nodePort,
+                         g_seed,
+                         g_vliquid_liquid_id,
+                         g_vliquid_lp_amount,
+                         g_offsetScheduledTick);
+            break;
+
+        case VLIQUID_UNSTAKE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            vliquidUnstake(g_nodeIp, g_nodePort,
+                          g_seed,
+                          g_vliquid_liquid_id,
+                          g_vliquid_lp_amount,
+                          g_offsetScheduledTick);
+            break;
         default:
             printf("Unexpected command!\n");
             break;

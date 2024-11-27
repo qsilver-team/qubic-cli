@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vliquidStruct.h"
+
 void vliquidBalanceOfMicroToken(const char* nodeIp, int nodePort,
                                 const char* assetName,
                                 const char* issuer,
@@ -155,3 +157,5 @@ void vliquidUnstake(const char* nodeIp, int nodePort,
 
 void vliquidExamPublic(const char* nodeIp, int nodePort,
                        uint64_t inputValue);
+
+void parseTokensString(const char* tokensStr, uint8_t tokenLength, Token* tokens);
