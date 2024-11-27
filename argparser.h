@@ -196,6 +196,8 @@ void print_help(){
     printf("\n[VLIQUID COMMANDS]\n");
     printf("\t-vliquidbalanceofmicrotoken <ASSET_NAME> <ISSUER> <OWNER>\n");
     printf("\t\tGet the balance of micro tokens for a specific owner.\n");
+    printf("\t-vliquidmicrotokenallowance <ASSET_NAME> <ISSUER> <RECIPIENT> <SPENDER>\n");
+    printf("\t\tGet the allowance of micro tokens for a specific recipient and spender.\n");
 }
 
 static long long charToNumber(char* a)
@@ -1055,6 +1057,17 @@ void parseArgument(int argc, char** argv){
             g_vliquid_micro_token_issuer = argv[i+2];
             g_vliquid_micro_token_owner = argv[i+3];
             i += 4;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidmicrotokenallowance") == 0) {
+            g_cmd = VLIQUID_MICRO_TOKEN_ALLOWANCE;
+            g_vliquid_micro_token_asset_name = argv[i+1];
+            g_vliquid_micro_token_issuer = argv[i+2];
+            g_vliquid_micro_token_recipient = argv[i+3];
+            g_vliquid_micro_token_spender = argv[i+4];
+            i += 5;
             CHECK_OVER_PARAMETERS
             break;
         }

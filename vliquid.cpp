@@ -91,5 +91,73 @@ void vliquidBalanceOfMicroToken(const char* nodeIp, int nodePort, const char* as
     LOG("Balance of micro token: %lld\n", result.microTokenAmount);
 }
 
-void vliquidMicroTokenAllowance(const char* nodeIp, int nodePort, const char* assetName, const char* issuer, const char* recipient, const char* spender) {
+void vliquidMicroTokenAllowance(const char* nodeIp, int nodePort, 
+                               const char* assetName, const char* issuer, 
+                               const char* recipient, const char* spender) {
+    auto qc = make_qc(nodeIp, nodePort);
+    
+    struct {
+        RequestResponseHeader header;
+        RequestContractFunction rcf;
+        MicroTokenAllowance_input mtai;
+    } packet;
+    
+    packet.header.setSize(sizeof(packet));
+    packet.header.randomizeDejavu();
+    packet.header.setType(RequestContractFunction::type());
+    
+    packet.rcf.inputSize = sizeof(MicroTokenAllowance_input);
+    packet.rcf.inputType = VLIQUID_MICRO_TOKEN_ALLOWANCE;
+    packet.rcf.contractIndex = VLIQUID_CONTRACT_INDEX;
+
+    // Convert issuer identity to public key
+    uint8_t issuerPublicKey[32] = {0};
+    getPublicKeyFromIdentity(issuer, issuerPublicKey);
+    memcpy(packet.mtai.issuer, issuerPublicKey, 32);
+
+    // Copy asset name
+    memcpy(&packet.mtai.assetName, assetName, 8);
+
+    // Convert recipient identity to public key
+    uint8_t recipientPublicKey[32] = {0};
+    getPublicKeyFromIdentity(recipient, recipientPublicKey); 
+    memcpy(packet.mtai.recipient, recipientPublicKey, 32);
+
+    // Convert spender identity to public key
+    uint8_t spenderPublicKey[32] = {0};
+    getPublicKeyFromIdentity(spender, spenderPublicKey);
+    memcpy(packet.mtai.spender, spenderPublicKey, 32);
+
+    // Send request
+    qc->sendData((uint8_t *) &packet, packet.header.size());
+    
+    // Receive response
+    std::vector<uint8_t> buffer;
+    qc->receiveDataAll(buffer);
+    uint8_t* data = buffer.data();
+    int recvByte = buffer.size();
+    int ptr = 0;
+
+    MicroTokenAllowance_output result;
+    memset(&result, 0, sizeof(result));
+    
+    while (ptr < recvByte) {
+        auto header = (RequestResponseHeader*)(data+ptr);
+        if (header->type() == RespondContractFunction::type()) {
+            if (recvByte - ptr - sizeof(RequestResponseHeader) >= sizeof(MicroTokenAllowance_output)) {
+                auto output = (MicroTokenAllowance_output*)(data + ptr + sizeof(RequestResponseHeader));
+                result = *output;
+            } else {
+                LOG("Error: Insufficient data for MicroTokenAllowance_output\n");
+                LOG("Received bytes: %d, Expected: %d\n", 
+                    recvByte - ptr - sizeof(RequestResponseHeader), 
+                    sizeof(MicroTokenAllowance_output));
+            }
+        } else {
+            LOG("Unexpected header type: %d\n", header->type());
+        }
+        ptr += header->size();
+    }
+
+    LOG("Micro token allowance: %lld\n", result.balance);
 }

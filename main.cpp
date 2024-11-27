@@ -418,6 +418,18 @@ int run(int argc, char* argv[])
             sanityCheckValidString(g_vliquid_micro_token_owner);
             vliquidBalanceOfMicroToken(g_nodeIp, g_nodePort, g_vliquid_micro_token_asset_name, g_vliquid_micro_token_issuer, g_vliquid_micro_token_owner);
             break;
+        case VLIQUID_MICRO_TOKEN_ALLOWANCE:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            sanityCheckValidString(g_vliquid_micro_token_recipient);
+            sanityCheckValidString(g_vliquid_micro_token_spender);
+            vliquidMicroTokenAllowance(g_nodeIp, g_nodePort,
+                                      g_vliquid_micro_token_asset_name,
+                                      g_vliquid_micro_token_issuer,
+                                      g_vliquid_micro_token_recipient,
+                                      g_vliquid_micro_token_spender);
+            break;
         default:
             printf("Unexpected command!\n");
             break;
