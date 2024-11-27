@@ -430,6 +430,20 @@ int run(int argc, char* argv[])
                                       g_vliquid_micro_token_recipient,
                                       g_vliquid_micro_token_spender);
             break;
+        case VLIQUID_APPROVE_MICRO_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            sanityCheckValidString(g_vliquid_micro_token_recipient);
+            vliquidApproveMicroToken(g_nodeIp, g_nodePort,
+                                    g_seed,
+                                    g_vliquid_micro_token_asset_name,
+                                    g_vliquid_micro_token_issuer,
+                                    g_vliquid_micro_token_recipient,
+                                    g_vliquid_micro_token_amount,
+                                    g_offsetScheduledTick);
+            break;
         default:
             printf("Unexpected command!\n");
             break;
