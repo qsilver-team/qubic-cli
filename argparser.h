@@ -202,6 +202,8 @@ void print_help(){
     printf("\t\tApprove micro tokens for a specific recipient.\n");
     printf("\t-vliquidconverttomicrotoken <ASSET_NAME> <ISSUER> <EXPENSIVE_TOKEN_AMOUNT>\n");
     printf("\t\tConvert expensive tokens to micro tokens.\n");
+    printf("\t-vliquidconverttoexpensivetoken <ASSET_NAME> <ISSUER> <MICRO_TOKEN_AMOUNT>\n");
+    printf("\t\tConvert micro tokens back to expensive tokens.\n");
 }
 
 static long long charToNumber(char* a)
@@ -1095,6 +1097,17 @@ void parseArgument(int argc, char** argv){
             g_vliquid_micro_token_asset_name = argv[i+1];
             g_vliquid_micro_token_issuer = argv[i+2];
             g_vliquid_expensive_token_amount = charToNumber(argv[i+3]);
+            i+=4;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidconverttoexpensivetoken") == 0)
+        {
+            g_cmd = VLIQUID_CONVERT_TO_EXPENSIVE_TOKEN;
+            g_vliquid_micro_token_asset_name = argv[i+1];
+            g_vliquid_micro_token_issuer = argv[i+2];
+            g_vliquid_micro_token_amount = charToNumber(argv[i+3]);
             i+=4;
             CHECK_OVER_PARAMETERS
             break;

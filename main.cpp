@@ -456,6 +456,18 @@ int run(int argc, char* argv[])
                                       g_vliquid_expensive_token_amount,
                                       g_offsetScheduledTick);
             break;
+        case VLIQUID_CONVERT_TO_EXPENSIVE_TOKEN:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckValidString(g_vliquid_micro_token_asset_name);
+            sanityCheckValidString(g_vliquid_micro_token_issuer);
+            vliquidConvertToExpensiveToken(g_nodeIp, g_nodePort,
+                                          g_seed,
+                                          g_vliquid_micro_token_asset_name,
+                                          g_vliquid_micro_token_issuer,
+                                          g_vliquid_micro_token_amount,
+                                          g_offsetScheduledTick);
+            break;
         default:
             printf("Unexpected command!\n");
             break;
