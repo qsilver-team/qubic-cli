@@ -657,6 +657,21 @@ int run(int argc, char* argv[])
                           g_vliquid_lp_amount,
                           g_offsetScheduledTick);
             break;
+        
+        case VLIQUID_ISSUE_ASSET:
+            sanityCheckNode(g_nodeIp, g_nodePort);
+            sanityCheckSeed(g_seed);
+            sanityCheckNumberOfUnit(g_vliquid_issue_asset_number_of_unit);
+            sanityCheckValidString(g_vliquid_issue_asset_name);
+            sanityCheckValidString(g_vliquid_issue_unit_of_measurement);
+            sanityCheckNumberOfDecimal(g_vliquid_issue_asset_num_decimal);
+            vliquidIssueAsset(g_nodeIp, g_nodePort, g_seed,
+                              g_vliquid_issue_asset_name,
+                              g_vliquid_issue_unit_of_measurement,
+                              g_vliquid_issue_asset_number_of_unit,
+                              g_vliquid_issue_asset_num_decimal,
+                              g_offsetScheduledTick);
+            break;
         default:
             printf("Unexpected command!\n");
             break;

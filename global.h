@@ -105,3 +105,8 @@ char* g_vliquid_output_token_info = nullptr;
 uint64_t g_vliquid_liquid_id_b = 0;
 uint64_t g_vliquid_bonus_token_amount = 0;
 char* g_vliquid_bonus_token_info = nullptr;
+
+char* g_vliquid_issue_asset_name = nullptr;
+char* g_vliquid_issue_unit_of_measurement = nullptr;
+int64_t g_vliquid_issue_asset_number_of_unit = -1;
+char g_vliquid_issue_asset_num_decimal = 0;

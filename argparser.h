@@ -238,6 +238,8 @@ void print_help(){
     printf("\t\tStake LP tokens into a specific liquidity pool. LIQUID_ID is the ID of the liquidity pool, LP_AMOUNT is the amount of LP tokens to be staked.\n");
     printf("\t-vliquidunstake <LIQUID_ID> <LP_AMOUNT>\n");
     printf("\t\tUnstake LP tokens from a specific liquidity pool. LIQUID_ID is the ID of the liquidity pool, LP_AMOUNT is the amount of LP tokens to be unstaked.\n");
+    printf("\t-vliquidissueasset <ASSET_NAME> <NUMBER_OF_UNIT> <UNIT_OF_MEASUREMENT> <NUM_DECIMAL>\n");
+    printf("\t\tCreate an asset via Vliquid contract.\n");
 }
 
 static long long charToNumber(char* a)
@@ -1331,6 +1333,18 @@ void parseArgument(int argc, char** argv){
             g_vliquid_liquid_id = charToNumber(argv[i+1]);
             g_vliquid_lp_amount = charToNumber(argv[i+2]);
             i+=3;
+            CHECK_OVER_PARAMETERS
+            break;
+        }
+
+        if(strcmp(argv[i], "-vliquidissueasset") == 0)
+        {
+            g_cmd = VLIQUID_ISSUE_ASSET;
+            g_vliquid_issue_asset_name = argv[i+1];
+            g_vliquid_issue_asset_number_of_unit = charToNumber(argv[i+2]);
+            g_vliquid_issue_unit_of_measurement = argv[i+3];
+            g_vliquid_issue_asset_num_decimal = charToNumber(argv[i+4]);
+            i+=5;
             CHECK_OVER_PARAMETERS
             break;
         }
