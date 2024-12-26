@@ -159,3 +159,11 @@ void vliquidExamPublic(const char* nodeIp, int nodePort,
                        uint64_t inputValue);
 
 void parseTokensString(const char* tokensStr, uint8_t tokenLength, Token* tokens);
+
+void vliquidIssueAsset(const char* nodeIp, int nodePort,
+                  const char* seed,
+                  const char* assetName,
+                  const char* unitOfMeasurement,
+                  int64_t numberOfUnits,
+                  char numberOfDecimalPlaces,
+                  uint32_t scheduledTickOffset);

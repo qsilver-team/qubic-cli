@@ -245,3 +245,11 @@ struct Unstake_input {
 struct Unstake_output {
     uint64_t unstakedLpAmount;
 };
+
+struct IssueAsset_input
+{
+    uint64_t name;
+    int64_t numberOfUnits;
+    uint64_t unitOfMeasurement;
+    char numberOfDecimalPlaces;
+};
